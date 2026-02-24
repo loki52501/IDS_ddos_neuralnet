@@ -1,0 +1,4 @@
+*.zip
+.claude/
+CSVs/
+dataset/
