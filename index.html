@@ -6,17 +6,17 @@
 <title>Deep Learning IDS — Capstone Presentation</title>
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #242736;
-    --accent: #4f8ef7;
-    --accent2: #7c5cbf;
-    --green: #3ecf8e;
-    --orange: #f5a623;
-    --red: #e74c3c;
-    --text: #e8eaf0;
-    --muted: #8b90a0;
-    --border: #2e3248;
+    --bg: #f4f3ef;
+    --surface: #ffffff;
+    --surface2: #eceae4;
+    --accent: #4558d4;
+    --accent2: #7045b8;
+    --green: #1a9464;
+    --orange: #b86d10;
+    --red: #c43333;
+    --text: #1a1928;
+    --muted: #6b6e82;
+    --border: #dddbd4;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -88,6 +88,7 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 22px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03);
   }
   .card-accent {
     border-left: 4px solid var(--accent);
@@ -106,14 +107,14 @@
     letter-spacing: .5px;
     margin-right: 6px;
   }
-  .badge-blue   { background: rgba(79,142,247,.18); color: var(--accent); }
-  .badge-green  { background: rgba(62,207,142,.18); color: var(--green); }
-  .badge-orange { background: rgba(245,166,35,.18);  color: var(--orange); }
-  .badge-purple { background: rgba(124,92,191,.18);  color: var(--accent2); }
+  .badge-blue   { background: rgba(69,88,212,.10); color: var(--accent); }
+  .badge-green  { background: rgba(26,148,100,.10); color: var(--green); }
+  .badge-orange { background: rgba(184,109,16,.10); color: var(--orange); }
+  .badge-purple { background: rgba(112,69,184,.10); color: var(--accent2); }
 
   /* ── STAT BOX ── */
   .stat {
-    background: var(--surface);
+    background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 18px 20px;
@@ -154,25 +155,25 @@
     border-top: 1px solid var(--border);
     vertical-align: middle;
   }
-  tr:hover td { background: rgba(79,142,247,.05); }
+  tr:hover td { background: rgba(69,88,212,.04); }
 
   /* ── CODE BLOCK ── */
   .code-block {
-    background: #0d1117;
+    background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 18px 20px;
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     font-size: 13px;
     line-height: 1.6;
-    color: #c9d1d9;
+    color: var(--text);
     overflow-x: auto;
   }
-  .code-block .kw  { color: #ff79c6; }
-  .code-block .fn  { color: #8be9fd; }
-  .code-block .str { color: #f1fa8c; }
-  .code-block .cmt { color: #6272a4; }
-  .code-block .num { color: #bd93f9; }
+  .code-block .kw  { color: #b0368c; }
+  .code-block .fn  { color: #1a5fb4; }
+  .code-block .str { color: #2e7d32; }
+  .code-block .cmt { color: var(--muted); }
+  .code-block .num { color: #6a3d9a; }
 
   /* ── PIPELINE FLOW ── */
   .pipeline {
@@ -190,6 +191,7 @@
     font-weight: 600;
     text-align: center;
     min-width: 90px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
   .pipe-arrow {
     color: var(--accent);
@@ -307,14 +309,14 @@
 
   /* ── COMPARISON HIGHLIGHT ── */
   .winner {
-    background: rgba(62,207,142,.08);
+    background: rgba(26,148,100,.07);
     border-radius: 8px;
   }
 
   /* ── STICKY NOTE ── */
   .note {
-    background: rgba(245,166,35,.08);
-    border: 1px solid rgba(245,166,35,.3);
+    background: rgba(184,109,16,.07);
+    border: 1px solid rgba(184,109,16,.25);
     border-radius: 10px;
     padding: 12px 16px;
     font-size: 13px;
@@ -356,7 +358,7 @@
       <span class="title-accent">Deep Learning</span><br>
       Intrusion Detection System
     </h1>
-    <p style="font-size:20px; color:var(--muted); margin-top:18px; max-width:600px; line-height:1.6;">
+    <p style="font-size:20px; color:var(--text); opacity:0.65; margin-top:18px; max-width:600px; line-height:1.6;">
       DDoS detection using temporal sequence modeling on real network flows —
       BiLSTM, 1D Residual CNN, and a CNN visual-strip baseline.
     </p>
@@ -475,9 +477,9 @@
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
           <span class="badge badge-green">Normal Browsing</span>
           <span class="badge badge-green">SSH / FTP</span>
-          <span class="badge badge-red" style="background:rgba(231,76,60,.18); color:var(--red);">SYN Flood</span>
-          <span class="badge badge-red" style="background:rgba(231,76,60,.18); color:var(--red);">ACK Flood</span>
-          <span class="badge badge-red" style="background:rgba(231,76,60,.18); color:var(--red);">TCP Bypass</span>
+          <span class="badge badge-red" style="background:rgba(196,51,51,.09); color:var(--red);">SYN Flood</span>
+          <span class="badge badge-red" style="background:rgba(196,51,51,.09); color:var(--red);">ACK Flood</span>
+          <span class="badge badge-red" style="background:rgba(196,51,51,.09); color:var(--red);">TCP Bypass</span>
           <span class="badge badge-orange">Suspicious</span>
         </div>
       </div>
@@ -546,7 +548,7 @@
     <div class="col">
       <div class="card card-accent" style="flex:1;">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-          <div style="width:40px; height:40px; background:rgba(79,142,247,.2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🖼️</div>
+          <div style="width:40px; height:40px; background:rgba(69,88,212,.10); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🖼️</div>
           <div>
             <div style="font-size:11px; color:var(--muted); letter-spacing:1px;">BASELINE · ids_2.ipynb</div>
             <div style="font-weight:700; font-size:17px;">CNN Visual Strip</div>
@@ -579,7 +581,7 @@
     <div class="col">
       <div class="card card-purple" style="flex:1;">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-          <div style="width:40px; height:40px; background:rgba(124,92,191,.2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">⏱️</div>
+          <div style="width:40px; height:40px; background:rgba(112,69,184,.10); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">⏱️</div>
           <div>
             <div style="font-size:11px; color:var(--muted); letter-spacing:1px;">MAIN MODEL · ids.ipynb</div>
             <div style="font-weight:700; font-size:17px;">Temporal Sequence Models</div>
@@ -669,7 +671,7 @@
     <div class="col" style="gap:14px;">
       <div class="card card-green">
         <h3>Sliding Window Logic</h3>
-        <div style="font-family:monospace; font-size:13px; background:var(--bg); padding:14px; border-radius:8px; margin-top:10px; line-height:2;">
+        <div style="font-family:monospace; font-size:13px; background:var(--surface2); padding:14px; border-radius:8px; margin-top:10px; line-height:2; border:1px solid var(--border);">
           <span style="color:var(--muted);">flow</span><sub>t-29</sub> → <sub>t-28</sub> → … → <span style="color:var(--green);">flow</span><sub>t</sub>
           <br>
           <span style="color:var(--muted); font-size:11px;">← window = 30 flows, stride = 15 (50% overlap) →</span>
@@ -927,7 +929,7 @@
           <strong style="color:var(--red);">0 Suspicious samples in training</strong>.
           Models learned to ignore the class entirely.
         </p>
-        <div style="margin-top:10px; padding:8px 12px; background:rgba(62,207,142,.08); border-radius:8px; font-size:13px; color:var(--green);">
+        <div style="margin-top:10px; padding:8px 12px; background:rgba(26,148,100,.07); border-radius:8px; font-size:13px; color:var(--green);">
           ✓ Fix: Build windows over full dataset, then <strong>stratify the split at window level</strong> — all 3 classes in every split.
         </div>
       </div>
@@ -941,7 +943,7 @@
           If the scaler or feature selectors see test data during fitting, evaluation
           results are overly optimistic and not representative of real deployment.
         </p>
-        <div style="margin-top:10px; padding:8px 12px; background:rgba(62,207,142,.08); border-radius:8px; font-size:13px; color:var(--green);">
+        <div style="margin-top:10px; padding:8px 12px; background:rgba(26,148,100,.07); border-radius:8px; font-size:13px; color:var(--green);">
           ✓ Fix: Fit scaler and selectors on <strong>first 70% of chronological rows only</strong>; apply transform to all.
         </div>
       </div>
@@ -954,7 +956,7 @@
           <h3>Overfitting</h3>
         </div>
         <p style="font-size:13.5px; color:var(--muted);">High-dimensional input (318 raw features) caused models to memorise training patterns.</p>
-        <div style="margin-top:10px; padding:8px 12px; background:rgba(62,207,142,.08); border-radius:8px; font-size:13px; color:var(--green);">
+        <div style="margin-top:10px; padding:8px 12px; background:rgba(26,148,100,.07); border-radius:8px; font-size:13px; color:var(--green);">
           ✓ Variance threshold + correlation pruning → 86 features<br>
           ✓ Dropout 0.4, intra-block Dropout 0.2<br>
           ✓ Label smoothing 0.1, weight decay 1e-3<br>
@@ -968,13 +970,13 @@
           <h3>Window Labeling</h3>
         </div>
         <p style="font-size:13.5px; color:var(--muted);">Majority-vote labeling silently drops the rare Suspicious class since benign flows dominate most windows.</p>
-        <div style="margin-top:10px; padding:8px 12px; background:rgba(62,207,142,.08); border-radius:8px; font-size:13px; color:var(--green);">
+        <div style="margin-top:10px; padding:8px 12px; background:rgba(26,148,100,.07); border-radius:8px; font-size:13px; color:var(--green);">
           ✓ Fix: Use <strong>label of the last flow</strong> in each window — preserves exact ground truth, keeps Suspicious samples visible.
         </div>
       </div>
     </div>
 
-    <div class="card" style="background:rgba(79,142,247,.06); border-color:rgba(79,142,247,.3);">
+    <div class="card" style="background:rgba(69,88,212,.05); border-color:rgba(69,88,212,.18);">
       <div class="row" style="gap:30px; align-items:center;">
         <div style="font-size:13px; color:var(--muted);">Other important decisions:</div>
         <div style="display:flex; flex-wrap:wrap; gap:8px;">
@@ -1270,7 +1272,7 @@
         </div>
       </div>
 
-      <div style="background:linear-gradient(135deg, rgba(79,142,247,.15), rgba(124,92,191,.15)); border:1px solid rgba(79,142,247,.3); border-radius:14px; padding:22px 24px; text-align:center;">
+      <div style="background:linear-gradient(135deg, rgba(69,88,212,.07), rgba(112,69,184,.07)); border:1px solid rgba(69,88,212,.2); border-radius:14px; padding:22px 24px; text-align:center;">
         <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">BEST RESULT</div>
         <div style="font-size:52px; font-weight:800; color:var(--green);">94.11%</div>
         <div style="font-size:14px; color:var(--muted); margin-top:4px;">1D Residual CNN · 3-class classification</div>
