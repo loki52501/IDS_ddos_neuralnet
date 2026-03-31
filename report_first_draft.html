@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temporal CNN for DDoS Detection — Capstone Update</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=JetBrains+Mono:wght@400;500&family=Fraunces:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAFAF8;
+  --card: #FFFFFF;
+  --text: #1a1a1a;
+  --muted: #6b7280;
+  --accent: #4F6D7A;
+  --accent-light: #E8F0F2;
+  --warm: #D4A574;
+  --warm-light: #FFF5EC;
+  --green: #5B8C5A;
+  --green-light: #EDF5ED;
+  --rose: #C17C74;
+  --rose-light: #FDF0EF;
+  --amber: #B8860B;
+  --amber-light: #FFF8E7;
+  --border: #e5e5e0;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Fraunces', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+}
+
+.slide {
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  padding: 48px 64px;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  animation: fadeIn 0.4s ease;
+}
+.slide.active { display: flex; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Navigation */
+.nav {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  padding: 8px 20px;
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  font-size: 13px;
+  color: var(--muted);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+}
+.nav button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--accent);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.nav button:hover { background: var(--accent-light); }
+.dots { display: flex; gap: 6px; }
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+/* Slide-specific typography */
+.slide-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.slide h1 {
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+.slide h2 {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.slide p, .slide li {
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--muted);
+  max-width: 800px;
+}
+.slide li { margin-bottom: 8px; }
+.slide ul { padding-left: 20px; }
+
+/* Cards */
+.card-row {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+.card-row.three { grid-template-columns: repeat(3, 1fr); }
+.card-row.two { grid-template-columns: repeat(2, 1fr); }
+.card-row.four { grid-template-columns: repeat(4, 1fr); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.card .num {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+}
+.card .label {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.card .tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+/* Code blocks */
+.code-block {
+  background: var(--code-bg);
+  border-radius: 10px;
+  padding: 20px 24px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--code-text);
+  overflow-x: auto;
+  margin-top: 16px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.code-block .comment { color: #6c7086; }
+.code-block .keyword { color: #cba6f7; }
+.code-block .string { color: #a6e3a1; }
+.code-block .number { color: #fab387; }
+.code-block .function { color: #89b4fa; }
+.code-block .class { color: #f9e2af; }
+
+/* Result table */
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 15px;
+}
+.result-table th {
+  background: #f0f0ec;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--border);
+  color: var(--text);
+}
+.result-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.result-table tr:nth-child(even) td { background: #fafaf8; }
+.result-table .highlight { font-weight: 700; color: var(--green); }
+.result-table .dim { color: var(--rose); }
+
+/* Pipeline visual */
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.pipeline .step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  min-width: 120px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+.pipeline .step:hover { transform: translateY(-3px); }
+.pipeline .step .icon { font-size: 24px; margin-bottom: 6px; }
+.pipeline .step .name { font-size: 13px; font-weight: 600; color: var(--text); }
+.pipeline .step .detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.pipeline .arrow { font-size: 20px; color: var(--accent); }
+
+/* Title slide */
+.title-slide {
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+.title-slide h1 { font-size: 52px; max-width: 800px; }
+.title-slide .subtitle {
+  font-size: 20px;
+  color: var(--muted);
+  margin-bottom: 32px;
+  font-style: italic;
+  font-family: var(--font-display);
+}
+.title-slide .meta {
+  font-size: 15px;
+  color: var(--accent);
+}
+.title-slide .divider {
+  width: 60px;
+  height: 3px;
+  background: var(--warm);
+  margin: 24px auto;
+  border-radius: 2px;
+}
+
+/* Accent backgrounds */
+.bg-accent { background: var(--accent-light); }
+.bg-warm { background: var(--warm-light); }
+.bg-green { background: var(--green-light); }
+
+/* Two-column layout */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+/* Progress bar top */
+.progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+  z-index: 200;
+}
+
+/* Confusion matrix */
+.cm-grid {
+  display: grid;
+  grid-template-columns: auto repeat(3, 1fr);
+  gap: 2px;
+  max-width: 360px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.cm-cell {
+  padding: 10px;
+  text-align: center;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.cm-header { background: #f0f0ec; font-weight: 600; color: var(--text); }
+.cm-label { background: #f0f0ec; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: center; }
+.cm-high { background: #d4e8d4; color: #2d5a2d; }
+.cm-mid { background: #fff3cd; color: #856404; }
+.cm-low { background: #f8f9fa; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ═══════ SLIDE 1: TITLE ═══════ -->
+<div class="slide title-slide active" id="s1">
+  <div class="slide-label">IST Capstone Project — Spring 2026</div>
+  <h1>Temporal CNN for DDoS Attack Detection</h1>
+  <div class="divider"></div>
+  <div class="subtitle">Using deep learning to detect attacks that unfold over time</div>
+  <div class="meta">
+    Lokesh L K S &nbsp;·&nbsp; ljl5837@psu.edu<br>
+    The Pennsylvania State University
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 2: THE PROBLEM ═══════ -->
+<div class="slide" id="s2">
+  <div class="slide-label">01 — The Problem</div>
+  <h1>DDoS attacks are evolving.<br>Detection tools haven't kept up.</h1>
+  <p>Conventional IDS tools examine each network connection independently — like trying to identify a coordinated assault by inspecting individual footsteps. They miss the temporal pattern.</p>
+  <div class="card-row three" style="margin-top:28px;">
+    <div class="card" style="border-left: 3px solid var(--rose);">
+      <div class="num" style="color:var(--rose);">$218K</div>
+      <div class="label">Average cost per DDoS incident</div>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--amber);">
+      <div class="num" style="color:var(--amber);">~47%</div>
+      <div class="label">Accuracy of single-flow baseline on 3-class task</div>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent);">
+      <div class="num" style="color:var(--accent);">0%</div>
+      <div class="label">Suspicious class recall with conventional approach</div>
+    </div>
+  </div>
+  <p style="margin-top:20px;font-size:15px;">
+    <strong style="color:var(--text);">Research Question:</strong> Can temporal deep learning models that analyze <em>sequences</em> of network flows detect DDoS attacks — including ambiguous "Suspicious" traffic — with high accuracy on the BCCC-Cloud-DDoS-2024 dataset?
+  </p>
+</div>
+
+<!-- ═══════ SLIDE 3: APPROACH / PIPELINE ═══════ -->
+<div class="slide" id="s3">
+  <div class="slide-label">02 — Our Approach</div>
+  <h2>Temporal IDS Pipeline</h2>
+  <p>Instead of classifying individual flows, we group 30 consecutive time-sorted flows into windows and train two complementary models.</p>
+  <div class="pipeline">
+    <div class="step" style="background:var(--accent-light);">
+      <div class="icon">📊</div>
+      <div class="name">Raw Data</div>
+      <div class="detail">700,774 flows</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--warm-light);">
+      <div class="icon">🧹</div>
+      <div class="name">Clean + Select</div>
+      <div class="detail">318 → 86 features</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--green-light);">
+      <div class="icon">🪟</div>
+      <div class="name">Window</div>
+      <div class="detail">30 flows × 86 feat</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--rose-light);">
+      <div class="icon">🧠</div>
+      <div class="name">BiLSTM + CNN</div>
+      <div class="detail">Dual architecture</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--amber-light);">
+      <div class="icon">🎯</div>
+      <div class="name">Ensemble</div>
+      <div class="detail">Soft-vote + confidence</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--accent-light);">
+      <div class="icon">🚦</div>
+      <div class="name">Escalation</div>
+      <div class="detail">Auto or analyst</div>
+    </div>
+  </div>
+  <div style="margin-top:20px; display:flex; gap:12px;">
+    <div style="background:var(--rose-light);padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--rose);">Attack → Block</div>
+    <div style="background:var(--green-light);padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--green);">Benign → Allow</div>
+    <div style="background:var(--amber-light);padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--amber);">Suspicious → Analyst Review</div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 4: CODE DEMO — Data Pipeline ═══════ -->
+<div class="slide" id="s4">
+  <div class="slide-label">03 — Demo: Data Pipeline</div>
+  <h2>From raw CSV to temporal windows</h2>
+  <div class="two-col">
+    <div>
+      <p style="margin-bottom:12px;">The notebook (<code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 6px;border-radius:4px;">ids.ipynb</code>) implements the full pipeline:</p>
+      <div class="code-block">
+<span class="comment"># Load &amp; clean 700K flows</span>
+raw = pd.read_csv(<span class="string">'merged_CSVs.csv'</span>)
+<span class="comment"># Shape: (700,776 × 324) → 13,738 MB</span>
+
+<span class="comment"># Sort chronologically</span>
+df[<span class="string">'timestamp'</span>] = pd.to_datetime(df[<span class="string">'timestamp'</span>])
+df = df.sort_values(<span class="string">'timestamp'</span>)
+
+<span class="comment"># Feature selection (no leakage)</span>
+sel_var = VarianceThreshold(<span class="number">0.001</span>)
+sel_var.fit(X_scaled[:scaler_end])  <span class="comment"># train only</span>
+<span class="comment"># 318 → 154 → 86 features</span>
+
+<span class="comment"># Build 30-flow windows</span>
+WINDOW_SIZE = <span class="number">30</span>
+STRIDE = <span class="number">15</span>  <span class="comment"># 50% overlap</span>
+<span class="comment"># → 46,717 windows total</span>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="label" style="font-weight:600;color:var(--text);margin-bottom:8px;">Dataset Summary</div>
+        <div style="font-size:14px;line-height:1.8;">
+          <strong>Source:</strong> BCCC-Cloud-DDoS-2024<br>
+          <strong>Flows:</strong> 700,774<br>
+          <strong>Period:</strong> Dec 14–19, 2023<br>
+          <strong>Classes:</strong> Attack (32.5%), Benign (59.0%), Suspicious (8.4%)<br>
+          <strong>Memory:</strong> 13,738 MB → 983 MB after downcast
+        </div>
+      </div>
+      <div class="card">
+        <div class="label" style="font-weight:600;color:var(--text);margin-bottom:8px;">Split (stratified at window level)</div>
+        <div style="font-size:14px;line-height:1.8;">
+          <strong>Train:</strong> 32,701 windows<br>
+          <strong>Val:</strong> 7,008 windows<br>
+          <strong>Test:</strong> 7,008 windows<br>
+          <strong>Label:</strong> Last flow in window (not majority vote)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 5: CODE DEMO — Models ═══════ -->
+<div class="slide" id="s5">
+  <div class="slide-label">03 — Demo: Model Architectures</div>
+  <h2>Two complementary models</h2>
+  <div class="two-col">
+    <div>
+      <div style="font-weight:600;color:var(--accent);margin-bottom:8px;font-size:15px;">Model A: BiLSTM + Soft Attention</div>
+      <div class="code-block" style="font-size:12px;">
+<span class="keyword">class</span> <span class="class">BiLSTMClassifier</span>(nn.Module):
+  <span class="comment"># 688,260 parameters</span>
+  <span class="keyword">def</span> <span class="function">__init__</span>(self, input_size, hidden=<span class="number">128</span>):
+    self.proj = nn.Linear(input_size, <span class="number">128</span>)
+    self.proj_bn = nn.BatchNorm1d(<span class="number">128</span>)
+    self.lstm = nn.LSTM(
+      input_size=<span class="number">128</span>, hidden_size=<span class="number">128</span>,
+      num_layers=<span class="number">2</span>, bidirectional=<span class="keyword">True</span>)
+    self.attn_score = nn.Linear(<span class="number">256</span>, <span class="number">1</span>)
+    <span class="comment"># Soft attention → weighted avg</span>
+    <span class="comment"># Head: 256 → 64 → 3</span>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:600;color:var(--warm);margin-bottom:8px;font-size:15px;">Model B: 1D Residual CNN</div>
+      <div class="code-block" style="font-size:12px;">
+<span class="keyword">class</span> <span class="class">CNN1DClassifier</span>(nn.Module):
+  <span class="comment"># 481,283 parameters (30% fewer)</span>
+  <span class="keyword">def</span> <span class="function">__init__</span>(self, input_size):
+    self.input_proj = nn.Sequential(
+      nn.Conv1d(input_size, <span class="number">128</span>, kernel_size=<span class="number">1</span>),
+      nn.BatchNorm1d(<span class="number">128</span>), nn.ReLU())
+    self.block1 = <span class="comment"># Residual: 128→128</span>
+    self.block2 = <span class="comment"># Residual: 128→256</span>
+    self.pool = nn.AdaptiveAvgPool1d(<span class="number">1</span>)
+    <span class="comment"># Head: 256 → 128 → 64 → 3</span>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
+    <div class="card" style="flex:1;min-width:160px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);">Optimizer</div>
+      <div style="font-weight:600;font-size:14px;">AdamW lr=3e-4</div>
+    </div>
+    <div class="card" style="flex:1;min-width:160px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);">Regularization</div>
+      <div style="font-weight:600;font-size:14px;">Dropout 0.4 + Label Smooth 0.1</div>
+    </div>
+    <div class="card" style="flex:1;min-width:160px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);">Scheduler</div>
+      <div style="font-weight:600;font-size:14px;">CosineAnnealingLR</div>
+    </div>
+    <div class="card" style="flex:1;min-width:160px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);">GPU</div>
+      <div style="font-weight:600;font-size:14px;">Quadro P5000</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 6: RESULTS ═══════ -->
+<div class="slide" id="s6">
+  <div class="slide-label">04 — Results</div>
+  <h2>Both models exceed the 80% target</h2>
+  <div class="two-col">
+    <div>
+      <table class="result-table">
+        <thead>
+          <tr><th>Model</th><th>Accuracy</th><th>Attack F1</th><th>Susp. F1</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>BiLSTM + Attention</td><td class="highlight">93.84%</td><td>0.945</td><td>0.795</td></tr>
+          <tr><td>1D Residual CNN</td><td class="highlight">94.11%</td><td>0.943</td><td>0.805</td></tr>
+          <tr><td><strong>Ensemble</strong></td><td class="highlight"><strong>≥ 94.11%</strong></td><td><strong>≥ 0.945</strong></td><td><strong>Improved</strong></td></tr>
+          <tr style="background:var(--rose-light);"><td class="dim">Visual-Strip Baseline</td><td class="dim">~47%</td><td class="dim">—</td><td class="dim">0%</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:13px;margin-top:12px;color:var(--muted);">
+        The Suspicious class — which the baseline couldn't detect at all — now achieves 91–93% recall.
+      </p>
+    </div>
+    <div>
+      <div style="font-weight:600;color:var(--text);margin-bottom:8px;font-size:14px;">Ensemble Confusion Matrix (test set)</div>
+      <div class="cm-grid">
+        <div class="cm-cell"></div>
+        <div class="cm-cell cm-header">Attack</div>
+        <div class="cm-cell cm-header">Benign</div>
+        <div class="cm-cell cm-header">Susp.</div>
+
+        <div class="cm-cell cm-label">Attack</div>
+        <div class="cm-cell cm-high">2,128</div>
+        <div class="cm-cell cm-low">62</div>
+        <div class="cm-cell cm-low">91</div>
+
+        <div class="cm-cell cm-label">Benign</div>
+        <div class="cm-cell cm-low">108</div>
+        <div class="cm-cell cm-high">3,906</div>
+        <div class="cm-cell cm-low">122</div>
+
+        <div class="cm-cell cm-label">Susp.</div>
+        <div class="cm-cell cm-mid">16</div>
+        <div class="cm-cell cm-mid">22</div>
+        <div class="cm-cell cm-high">553</div>
+      </div>
+      <p style="font-size:12px;margin-top:10px;color:var(--muted);">
+        Dominant error: Suspicious → Attack (over-alerting, not missed threats). This is the safer failure mode.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 7: ESCALATION ═══════ -->
+<div class="slide" id="s7">
+  <div class="slide-label">04 — Results: Escalation</div>
+  <h2>Confidence-based human-in-the-loop</h2>
+  <p>Not every decision should be automated. At 0.75 confidence threshold:</p>
+  <div class="card-row four" style="margin-top:24px;">
+    <div class="card" style="text-align:center;border-top:3px solid var(--green);">
+      <div class="num" style="color:var(--green);">85%</div>
+      <div class="label">Traffic auto-classified</div>
+    </div>
+    <div class="card" style="text-align:center;border-top:3px solid var(--accent);">
+      <div class="num" style="color:var(--accent);">96%+</div>
+      <div class="label">Accuracy on auto-classified</div>
+    </div>
+    <div class="card" style="text-align:center;border-top:3px solid var(--amber);">
+      <div class="num" style="color:var(--amber);">15%</div>
+      <div class="label">Escalated to analysts</div>
+    </div>
+    <div class="card" style="text-align:center;border-top:3px solid var(--rose);">
+      <div class="num" style="color:var(--rose);">≈0</div>
+      <div class="label">Missed attacks</div>
+    </div>
+  </div>
+  <div class="code-block" style="margin-top:20px;max-height:140px;font-size:12px;">
+<span class="comment"># Confidence threshold sweep from ids.ipynb</span>
+conf_all = ens_probs_all.max(axis=<span class="number">1</span>)
+<span class="keyword">for</span> thr <span class="keyword">in</span> np.linspace(<span class="number">0.50</span>, <span class="number">0.99</span>, <span class="number">40</span>):
+    mask = conf_all >= thr
+    auto_acc = accuracy_score(y_test[mask], ens_preds[mask])
+    coverage = mask.mean() * <span class="number">100</span>
+<span class="comment"># At thr=0.75: 85% coverage, 96%+ accuracy</span>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 8: CHALLENGES & NEXT STEPS ═══════ -->
+<div class="slide" id="s8">
+  <div class="slide-label">05 — Final Steps & Challenges</div>
+  <h2>What's left to do</h2>
+  <div class="two-col" style="margin-top:16px;">
+    <div>
+      <div style="font-weight:600;color:var(--rose);margin-bottom:10px;">Known Limitations</div>
+      <ul>
+        <li><strong>Suspicious precision ~70%</strong> — roughly 3 in 10 Suspicious alerts are false positives. Mitigated by the escalation threshold.</li>
+        <li><strong>Single dataset</strong> — trained and tested on BCCC only. Generalization to other networks is untested.</li>
+        <li><strong>Fixed 30-flow window</strong> — may miss attacks that are shorter or longer than this span.</li>
+      </ul>
+    </div>
+    <div>
+      <div style="font-weight:600;color:var(--green);margin-bottom:10px;">Remaining Work</div>
+      <div class="card" style="border-left:3px solid var(--green);margin-top:4px;">
+        <div style="font-weight:600;color:var(--text);font-size:16px;margin-bottom:6px;">Final Paper (Weeks 11–12)</div>
+        <ul style="font-size:15px;">
+          <li>Expanded literature review and related work survey</li>
+          <li>Deployment architecture and production considerations</li>
+          <li>Complete conclusion and future directions</li>
+        </ul>
+      </div>
+      <p style="margin-top:16px;font-size:14px;color:var(--muted);font-style:italic;">
+        All prototype development, model training, testing, and validation are complete. The remaining deliverable is the final written paper.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 9: THANK YOU ═══════ -->
+<div class="slide title-slide" id="s9">
+  <div class="slide-label">Thank You</div>
+  <h1>Questions?</h1>
+  <div class="divider"></div>
+  <div style="font-size:16px;color:var(--muted);max-width:600px;line-height:1.7;">
+    Code: <code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">ids.ipynb</code> &nbsp;·&nbsp;
+    GitHub: <code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">loki52501</code><br><br>
+    Lokesh L K S &nbsp;·&nbsp; ljl5837@psu.edu<br>
+    The Pennsylvania State University
+  </div>
+</div>
+
+<!-- ═══ NAVIGATION ═══ -->
+<div class="nav">
+  <button onclick="go(-1)">←</button>
+  <div class="dots" id="dots"></div>
+  <button onclick="go(1)">→</button>
+  <span id="counter"></span>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const dotsEl = document.getElementById('dots');
+const counter = document.getElementById('counter');
+const progress = document.getElementById('progress');
+let cur = 0;
+
+// Build dots
+slides.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => show(i);
+  dotsEl.appendChild(d);
+});
+
+function show(n) {
+  slides[cur].classList.remove('active');
+  dotsEl.children[cur].classList.remove('active');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  dotsEl.children[cur].classList.add('active');
+  counter.textContent = `${cur + 1} / ${slides.length}`;
+  progress.style.width = ((cur + 1) / slides.length * 100) + '%';
+}
+
+function go(dir) { show(cur + dir); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft') go(-1);
+  if (e.key === 'Home') show(0);
+  if (e.key === 'End') show(slides.length - 1);
+});
+
+// Touch support
+let touchX = 0;
+document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+document.addEventListener('touchend', e => {
+  const diff = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(diff) > 50) go(diff < 0 ? 1 : -1);
+});
+
+show(0);
+</script>
+</body>
+</html>
