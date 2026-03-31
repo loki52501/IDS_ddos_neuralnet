@@ -3,1333 +3,692 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deep Learning IDS — Capstone Presentation</title>
+<title>Temporal CNN for DDoS Detection — Capstone Update</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=JetBrains+Mono:wght@400;500&family=Fraunces:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f4f3ef;
-    --surface: #ffffff;
-    --surface2: #eceae4;
-    --accent: #4558d4;
-    --accent2: #7045b8;
-    --green: #1a9464;
-    --orange: #b86d10;
-    --red: #c43333;
-    --text: #1a1928;
-    --muted: #6b6e82;
-    --border: #dddbd4;
-  }
+:root {
+  --bg: #FAFAF8;
+  --card: #FFFFFF;
+  --text: #1a1a1a;
+  --muted: #6b7280;
+  --accent: #4F6D7A;
+  --accent-light: #E8F0F2;
+  --warm: #D4A574;
+  --warm-light: #FFF5EC;
+  --green: #5B8C5A;
+  --green-light: #EDF5ED;
+  --rose: #C17C74;
+  --rose-light: #FDF0EF;
+  --amber: #B8860B;
+  --amber-light: #FFF8E7;
+  --border: #e5e5e0;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Fraunces', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    height: 100vh;
-    overflow: hidden;
-    user-select: none;
-  }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+}
 
-  /* ── SLIDE CONTAINER ── */
-  #deck {
-    width: 100vw;
-    height: 100vh;
-    position: relative;
-    overflow: hidden;
-  }
+.slide {
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  padding: 48px 64px;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  animation: fadeIn 0.4s ease;
+}
+.slide.active { display: flex; }
 
-  .slide {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    padding: 52px 64px 44px;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateX(60px);
-    transition: opacity .35s ease, transform .35s ease;
-  }
-  .slide.active {
-    opacity: 1;
-    pointer-events: all;
-    transform: translateX(0);
-  }
-  .slide.out-left {
-    opacity: 0;
-    transform: translateX(-60px);
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-  /* ── TYPOGRAPHY ── */
-  .slide-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 12px;
-  }
-  h1 { font-size: 48px; font-weight: 800; line-height: 1.15; }
-  h2 { font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 28px; }
-  h3 { font-size: 19px; font-weight: 700; margin-bottom: 10px; }
-  p, li { font-size: 16px; line-height: 1.65; color: var(--text); }
-  .muted { color: var(--muted); }
-  .accent { color: var(--accent); }
-  .green  { color: var(--green); }
-  .orange { color: var(--orange); }
+/* Navigation */
+.nav {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  padding: 8px 20px;
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  font-size: 13px;
+  color: var(--muted);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+}
+.nav button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--accent);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.nav button:hover { background: var(--accent-light); }
+.dots { display: flex; gap: 6px; }
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
 
-  /* ── LAYOUT HELPERS ── */
-  .row { display: flex; gap: 28px; }
-  .col { flex: 1; display: flex; flex-direction: column; }
-  .spacer { flex: 1; }
+/* Slide-specific typography */
+.slide-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.slide h1 {
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+.slide h2 {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.slide p, .slide li {
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--muted);
+  max-width: 800px;
+}
+.slide li { margin-bottom: 8px; }
+.slide ul { padding-left: 20px; }
 
-  /* ── CARDS ── */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 22px 24px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03);
-  }
-  .card-accent {
-    border-left: 4px solid var(--accent);
-  }
-  .card-green  { border-left: 4px solid var(--green); }
-  .card-orange { border-left: 4px solid var(--orange); }
-  .card-purple { border-left: 4px solid var(--accent2); }
+/* Cards */
+.card-row {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+.card-row.three { grid-template-columns: repeat(3, 1fr); }
+.card-row.two { grid-template-columns: repeat(2, 1fr); }
+.card-row.four { grid-template-columns: repeat(4, 1fr); }
 
-  /* ── PILLS / BADGES ── */
-  .badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .5px;
-    margin-right: 6px;
-  }
-  .badge-blue   { background: rgba(69,88,212,.10); color: var(--accent); }
-  .badge-green  { background: rgba(26,148,100,.10); color: var(--green); }
-  .badge-orange { background: rgba(184,109,16,.10); color: var(--orange); }
-  .badge-purple { background: rgba(112,69,184,.10); color: var(--accent2); }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.card .num {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+}
+.card .label {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.card .tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+}
 
-  /* ── STAT BOX ── */
-  .stat {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 18px 20px;
-    text-align: center;
-  }
-  .stat-val {
-    font-size: 36px;
-    font-weight: 800;
-    color: var(--accent);
-    line-height: 1;
-  }
-  .stat-lbl {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 6px;
-    letter-spacing: .8px;
-    text-transform: uppercase;
-  }
+/* Code blocks */
+.code-block {
+  background: var(--code-bg);
+  border-radius: 10px;
+  padding: 20px 24px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--code-text);
+  overflow-x: auto;
+  margin-top: 16px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.code-block .comment { color: #6c7086; }
+.code-block .keyword { color: #cba6f7; }
+.code-block .string { color: #a6e3a1; }
+.code-block .number { color: #fab387; }
+.code-block .function { color: #89b4fa; }
+.code-block .class { color: #f9e2af; }
 
-  /* ── TABLE ── */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14.5px;
-  }
-  th {
-    background: var(--surface2);
-    color: var(--muted);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 10px 14px;
-    text-align: left;
-  }
-  td {
-    padding: 10px 14px;
-    border-top: 1px solid var(--border);
-    vertical-align: middle;
-  }
-  tr:hover td { background: rgba(69,88,212,.04); }
+/* Result table */
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 15px;
+}
+.result-table th {
+  background: #f0f0ec;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--border);
+  color: var(--text);
+}
+.result-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.result-table tr:nth-child(even) td { background: #fafaf8; }
+.result-table .highlight { font-weight: 700; color: var(--green); }
+.result-table .dim { color: var(--rose); }
 
-  /* ── CODE BLOCK ── */
-  .code-block {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px 20px;
-    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--text);
-    overflow-x: auto;
-  }
-  .code-block .kw  { color: #b0368c; }
-  .code-block .fn  { color: #1a5fb4; }
-  .code-block .str { color: #2e7d32; }
-  .code-block .cmt { color: var(--muted); }
-  .code-block .num { color: #6a3d9a; }
+/* Pipeline visual */
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.pipeline .step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  min-width: 120px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+.pipeline .step:hover { transform: translateY(-3px); }
+.pipeline .step .icon { font-size: 24px; margin-bottom: 6px; }
+.pipeline .step .name { font-size: 13px; font-weight: 600; color: var(--text); }
+.pipeline .step .detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.pipeline .arrow { font-size: 20px; color: var(--accent); }
 
-  /* ── PIPELINE FLOW ── */
-  .pipeline {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    flex-wrap: wrap;
-  }
-  .pipe-step {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-    min-width: 90px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  }
-  .pipe-arrow {
-    color: var(--accent);
-    font-size: 22px;
-    padding: 0 8px;
-    font-weight: 300;
-  }
+/* Title slide */
+.title-slide {
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+.title-slide h1 { font-size: 52px; max-width: 800px; }
+.title-slide .subtitle {
+  font-size: 20px;
+  color: var(--muted);
+  margin-bottom: 32px;
+  font-style: italic;
+  font-family: var(--font-display);
+}
+.title-slide .meta {
+  font-size: 15px;
+  color: var(--accent);
+}
+.title-slide .divider {
+  width: 60px;
+  height: 3px;
+  background: var(--warm);
+  margin: 24px auto;
+  border-radius: 2px;
+}
 
-  /* ── ARCH BOX ── */
-  .arch-layer {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 13px;
-    text-align: center;
-    margin-bottom: 4px;
-  }
-  .arch-arrow {
-    text-align: center;
-    font-size: 16px;
-    color: var(--muted);
-    margin: 1px 0;
-  }
+/* Accent backgrounds */
+.bg-accent { background: var(--accent-light); }
+.bg-warm { background: var(--warm-light); }
+.bg-green { background: var(--green-light); }
 
-  /* ── RESULT METER ── */
-  .meter-wrap {
-    margin: 6px 0;
-  }
-  .meter-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    margin-bottom: 4px;
-  }
-  .meter-bar {
-    height: 8px;
-    background: var(--surface2);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .meter-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width .6s ease;
-  }
+/* Two-column layout */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+  margin-top: 16px;
+}
 
-  /* ── DIVIDER ── */
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 16px 0;
-  }
+/* Progress bar top */
+.progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+  z-index: 200;
+}
 
-  /* ── BULLET LIST ── */
-  ul.clean { list-style: none; }
-  ul.clean li { padding: 5px 0; }
-  ul.clean li::before {
-    content: '▸ ';
-    color: var(--accent);
-    font-size: 12px;
-  }
-
-  /* ── CONTROLS ── */
-  #controls {
-    position: fixed;
-    bottom: 24px;
-    right: 32px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    z-index: 100;
-  }
-  .btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 18px;
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background .2s;
-  }
-  .btn:hover { background: var(--surface2); }
-
-  #slide-counter {
-    font-size: 12px;
-    color: var(--muted);
-    min-width: 50px;
-    text-align: center;
-  }
-
-  /* ── PROGRESS BAR ── */
-  #progress {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    transition: width .35s ease;
-    z-index: 200;
-  }
-
-  /* ── TITLE SLIDE SPECIAL ── */
-  .title-accent {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* ── COMPARISON HIGHLIGHT ── */
-  .winner {
-    background: rgba(26,148,100,.07);
-    border-radius: 8px;
-  }
-
-  /* ── STICKY NOTE ── */
-  .note {
-    background: rgba(184,109,16,.07);
-    border: 1px solid rgba(184,109,16,.25);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 13px;
-    color: var(--orange);
-  }
-
-  /* ── ICON NUMBERS ── */
-  .step-num {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #fff;
-    font-size: 13px;
-    font-weight: 800;
-    flex-shrink: 0;
-    margin-right: 10px;
-  }
+/* Confusion matrix */
+.cm-grid {
+  display: grid;
+  grid-template-columns: auto repeat(3, 1fr);
+  gap: 2px;
+  max-width: 360px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.cm-cell {
+  padding: 10px;
+  text-align: center;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.cm-header { background: #f0f0ec; font-weight: 600; color: var(--text); }
+.cm-label { background: #f0f0ec; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: center; }
+.cm-high { background: #d4e8d4; color: #2d5a2d; }
+.cm-mid { background: #fff3cd; color: #856404; }
+.cm-low { background: #f8f9fa; color: var(--muted); }
 </style>
 </head>
 <body>
 
-<div id="progress"></div>
+<div class="progress" id="progress"></div>
 
-<div id="deck">
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 1 — TITLE
-═══════════════════════════════════════════════════════ -->
-<div class="slide active" id="s1">
-  <div class="spacer"></div>
-
-  <div style="max-width: 820px;">
-    <div class="slide-label" style="margin-bottom:20px;">IST 584 — Capstone Project</div>
-    <h1>
-      <span class="title-accent">Deep Learning</span><br>
-      Intrusion Detection System
-    </h1>
-    <p style="font-size:20px; color:var(--text); opacity:0.65; margin-top:18px; max-width:600px; line-height:1.6;">
-      DDoS detection using temporal sequence modeling on real network flows —
-      BiLSTM, 1D Residual CNN, and a CNN visual-strip baseline.
-    </p>
-
-    <div class="divider" style="margin-top:40px; max-width:400px;"></div>
-
-    <div class="row" style="gap:48px; margin-top:24px;">
-      <div>
-        <div style="font-size:11px; letter-spacing:2px; color:var(--muted); margin-bottom:6px;">DATASET</div>
-        <div style="font-weight:700;">BCCC-Cloud-DDoS-2024</div>
-      </div>
-      <div>
-        <div style="font-size:11px; letter-spacing:2px; color:var(--muted); margin-bottom:6px;">RECORDS</div>
-        <div style="font-weight:700;">700,774 network flows</div>
-      </div>
-      <div>
-        <div style="font-size:11px; letter-spacing:2px; color:var(--muted); margin-bottom:6px;">BEST ACCURACY</div>
-        <div style="font-weight:700; color:var(--green);">94.11%</div>
-      </div>
-    </div>
+<!-- ═══════ SLIDE 1: TITLE ═══════ -->
+<div class="slide title-slide active" id="s1">
+  <div class="slide-label">IST Capstone Project — Spring 2026</div>
+  <h1>Temporal CNN for DDoS Attack Detection</h1>
+  <div class="divider"></div>
+  <div class="subtitle">Using deep learning to detect attacks that unfold over time</div>
+  <div class="meta">
+    Lokesh L K S &nbsp;·&nbsp; ljl5837@psu.edu<br>
+    The Pennsylvania State University
   </div>
-
-  <div class="spacer"></div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 2 — PROBLEM STATEMENT
-═══════════════════════════════════════════════════════ -->
+<!-- ═══════ SLIDE 2: THE PROBLEM ═══════ -->
 <div class="slide" id="s2">
-  <div class="slide-label">Problem Statement</div>
-  <h2>Why do we need a smarter IDS?</h2>
+  <div class="slide-label">01 — The Problem</div>
+  <h1>DDoS attacks are evolving.<br>Detection tools haven't kept up.</h1>
+  <p>Conventional IDS tools examine each network connection independently — like trying to identify a coordinated assault by inspecting individual footsteps. They miss the temporal pattern.</p>
+  <div class="card-row three" style="margin-top:28px;">
+    <div class="card" style="border-left: 3px solid var(--rose);">
+      <div class="num" style="color:var(--rose);">$218K</div>
+      <div class="label">Average cost per DDoS incident</div>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--amber);">
+      <div class="num" style="color:var(--amber);">~47%</div>
+      <div class="label">Accuracy of single-flow baseline on 3-class task</div>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent);">
+      <div class="num" style="color:var(--accent);">0%</div>
+      <div class="label">Suspicious class recall with conventional approach</div>
+    </div>
+  </div>
+  <p style="margin-top:20px;font-size:15px;">
+    <strong style="color:var(--text);">Research Question:</strong> Can temporal deep learning models that analyze <em>sequences</em> of network flows detect DDoS attacks — including ambiguous "Suspicious" traffic — with high accuracy on the BCCC-Cloud-DDoS-2024 dataset?
+  </p>
+</div>
 
-  <div class="row" style="gap:24px; flex:1;">
-    <div class="col" style="gap:16px;">
-      <div class="card card-accent">
-        <h3>DDoS Attacks are Growing</h3>
-        <p style="color:var(--muted); margin-top:8px; font-size:15px;">
-          Distributed Denial-of-Service attacks flood servers with traffic, causing service disruptions.
-          Cloud environments are a prime target due to their high-value nature.
-        </p>
-      </div>
+<!-- ═══════ SLIDE 3: APPROACH / PIPELINE ═══════ -->
+<div class="slide" id="s3">
+  <div class="slide-label">02 — Our Approach</div>
+  <h2>Temporal IDS Pipeline</h2>
+  <p>Instead of classifying individual flows, we group 30 consecutive time-sorted flows into windows and train two complementary models.</p>
+  <div class="pipeline">
+    <div class="step" style="background:var(--accent-light);">
+      <div class="icon">📊</div>
+      <div class="name">Raw Data</div>
+      <div class="detail">700,774 flows</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--warm-light);">
+      <div class="icon">🧹</div>
+      <div class="name">Clean + Select</div>
+      <div class="detail">318 → 86 features</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--green-light);">
+      <div class="icon">🪟</div>
+      <div class="name">Window</div>
+      <div class="detail">30 flows × 86 feat</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--rose-light);">
+      <div class="icon">🧠</div>
+      <div class="name">BiLSTM + CNN</div>
+      <div class="detail">Dual architecture</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--amber-light);">
+      <div class="icon">🎯</div>
+      <div class="name">Ensemble</div>
+      <div class="detail">Soft-vote + confidence</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--accent-light);">
+      <div class="icon">🚦</div>
+      <div class="name">Escalation</div>
+      <div class="detail">Auto or analyst</div>
+    </div>
+  </div>
+  <div style="margin-top:20px; display:flex; gap:12px;">
+    <div style="background:var(--rose-light);padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--rose);">Attack → Block</div>
+    <div style="background:var(--green-light);padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--green);">Benign → Allow</div>
+    <div style="background:var(--amber-light);padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--amber);">Suspicious → Analyst Review</div>
+  </div>
+</div>
 
-      <div class="card card-orange">
-        <h3>Traditional IDS Limitations</h3>
-        <ul class="clean" style="margin-top:8px;">
-          <li>Rule-based systems miss novel attack patterns</li>
-          <li>Cannot learn from temporal flow sequences</li>
-          <li>High false-positive rates with fixed thresholds</li>
-          <li>Fail to distinguish "Suspicious" from normal traffic</li>
-        </ul>
-      </div>
+<!-- ═══════ SLIDE 4: CODE DEMO — Data Pipeline ═══════ -->
+<div class="slide" id="s4">
+  <div class="slide-label">03 — Demo: Data Pipeline</div>
+  <h2>From raw CSV to temporal windows</h2>
+  <div class="two-col">
+    <div>
+      <p style="margin-bottom:12px;">The notebook (<code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 6px;border-radius:4px;">ids.ipynb</code>) implements the full pipeline:</p>
+      <div class="code-block">
+<span class="comment"># Load &amp; clean 700K flows</span>
+raw = pd.read_csv(<span class="string">'merged_CSVs.csv'</span>)
+<span class="comment"># Shape: (700,776 × 324) → 13,738 MB</span>
 
-      <div class="card card-green">
-        <h3>Our Goal</h3>
-        <p style="color:var(--muted); margin-top:8px; font-size:15px;">
-          Build a <strong style="color:var(--green);">deep learning IDS</strong> that learns
-          temporal patterns across sequences of network flows to classify traffic as
-          <strong>Benign</strong>, <strong>Attack</strong>, or <strong>Suspicious</strong>.
-        </p>
+<span class="comment"># Sort chronologically</span>
+df[<span class="string">'timestamp'</span>] = pd.to_datetime(df[<span class="string">'timestamp'</span>])
+df = df.sort_values(<span class="string">'timestamp'</span>)
+
+<span class="comment"># Feature selection (no leakage)</span>
+sel_var = VarianceThreshold(<span class="number">0.001</span>)
+sel_var.fit(X_scaled[:scaler_end])  <span class="comment"># train only</span>
+<span class="comment"># 318 → 154 → 86 features</span>
+
+<span class="comment"># Build 30-flow windows</span>
+WINDOW_SIZE = <span class="number">30</span>
+STRIDE = <span class="number">15</span>  <span class="comment"># 50% overlap</span>
+<span class="comment"># → 46,717 windows total</span>
       </div>
     </div>
-
-    <div class="col" style="gap:16px; max-width:340px;">
-      <div class="card" style="text-align:center; flex:1; display:flex; flex-direction:column; justify-content:center; gap:24px;">
-        <div class="stat">
-          <div class="stat-val" style="color:var(--green);">413K</div>
-          <div class="stat-lbl">Benign Flows</div>
+    <div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="label" style="font-weight:600;color:var(--text);margin-bottom:8px;">Dataset Summary</div>
+        <div style="font-size:14px;line-height:1.8;">
+          <strong>Source:</strong> BCCC-Cloud-DDoS-2024<br>
+          <strong>Flows:</strong> 700,774<br>
+          <strong>Period:</strong> Dec 14–19, 2023<br>
+          <strong>Classes:</strong> Attack (32.5%), Benign (59.0%), Suspicious (8.4%)<br>
+          <strong>Memory:</strong> 13,738 MB → 983 MB after downcast
         </div>
-        <div class="stat">
-          <div class="stat-val" style="color:var(--red);">228K</div>
-          <div class="stat-lbl">Attack Flows</div>
-        </div>
-        <div class="stat">
-          <div class="stat-val" style="color:var(--orange);">59K</div>
-          <div class="stat-lbl">Suspicious Flows</div>
+      </div>
+      <div class="card">
+        <div class="label" style="font-weight:600;color:var(--text);margin-bottom:8px;">Split (stratified at window level)</div>
+        <div style="font-size:14px;line-height:1.8;">
+          <strong>Train:</strong> 32,701 windows<br>
+          <strong>Val:</strong> 7,008 windows<br>
+          <strong>Test:</strong> 7,008 windows<br>
+          <strong>Label:</strong> Last flow in window (not majority vote)
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 3 — DATASET
-═══════════════════════════════════════════════════════ -->
-<div class="slide" id="s3">
-  <div class="slide-label">Dataset</div>
-  <h2>BCCC-Cloud-DDoS-2024</h2>
-
-  <div class="row" style="gap:24px; flex:1;">
-    <div class="col" style="gap:18px;">
-      <div class="row" style="gap:16px;">
-        <div class="stat" style="flex:1;">
-          <div class="stat-val">700K</div>
-          <div class="stat-lbl">Network Flows</div>
-        </div>
-        <div class="stat" style="flex:1;">
-          <div class="stat-val">324</div>
-          <div class="stat-lbl">Raw Features</div>
-        </div>
-        <div class="stat" style="flex:1;">
-          <div class="stat-val">6</div>
-          <div class="stat-lbl">Days Captured</div>
-        </div>
-        <div class="stat" style="flex:1;">
-          <div class="stat-val">26</div>
-          <div class="stat-lbl">Activity Types</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Data Collection Window</h3>
-        <p style="color:var(--muted); margin-top:8px; font-size:14px;">
-          Dec 14–19, 2023 · Real network traffic captures from a cloud environment
-        </p>
-        <div class="divider"></div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
-          <span class="badge badge-green">Normal Browsing</span>
-          <span class="badge badge-green">SSH / FTP</span>
-          <span class="badge badge-red" style="background:rgba(196,51,51,.09); color:var(--red);">SYN Flood</span>
-          <span class="badge badge-red" style="background:rgba(196,51,51,.09); color:var(--red);">ACK Flood</span>
-          <span class="badge badge-red" style="background:rgba(196,51,51,.09); color:var(--red);">TCP Bypass</span>
-          <span class="badge badge-orange">Suspicious</span>
-        </div>
-      </div>
-
-      <div class="note">
-        ⚠ <strong>Key challenge:</strong> Suspicious traffic is concentrated on Dec 18–19,
-        creating a temporal skew. A naive time-split puts <strong>0 Suspicious samples in training</strong>
-        — this needed a special fix.
+<!-- ═══════ SLIDE 5: CODE DEMO — Models ═══════ -->
+<div class="slide" id="s5">
+  <div class="slide-label">03 — Demo: Model Architectures</div>
+  <h2>Two complementary models</h2>
+  <div class="two-col">
+    <div>
+      <div style="font-weight:600;color:var(--accent);margin-bottom:8px;font-size:15px;">Model A: BiLSTM + Soft Attention</div>
+      <div class="code-block" style="font-size:12px;">
+<span class="keyword">class</span> <span class="class">BiLSTMClassifier</span>(nn.Module):
+  <span class="comment"># 688,260 parameters</span>
+  <span class="keyword">def</span> <span class="function">__init__</span>(self, input_size, hidden=<span class="number">128</span>):
+    self.proj = nn.Linear(input_size, <span class="number">128</span>)
+    self.proj_bn = nn.BatchNorm1d(<span class="number">128</span>)
+    self.lstm = nn.LSTM(
+      input_size=<span class="number">128</span>, hidden_size=<span class="number">128</span>,
+      num_layers=<span class="number">2</span>, bidirectional=<span class="keyword">True</span>)
+    self.attn_score = nn.Linear(<span class="number">256</span>, <span class="number">1</span>)
+    <span class="comment"># Soft attention → weighted avg</span>
+    <span class="comment"># Head: 256 → 64 → 3</span>
       </div>
     </div>
-
-    <div class="col" style="max-width:320px; gap:14px;">
-      <h3 style="margin-bottom:4px;">Class Distribution</h3>
-
-      <div>
-        <div class="meter-label">
-          <span><span style="color:var(--green);">●</span> Benign</span>
-          <span class="green">58.9%</span>
-        </div>
-        <div class="meter-bar">
-          <div class="meter-fill" style="width:58.9%; background:var(--green);"></div>
-        </div>
+    <div>
+      <div style="font-weight:600;color:var(--warm);margin-bottom:8px;font-size:15px;">Model B: 1D Residual CNN</div>
+      <div class="code-block" style="font-size:12px;">
+<span class="keyword">class</span> <span class="class">CNN1DClassifier</span>(nn.Module):
+  <span class="comment"># 481,283 parameters (30% fewer)</span>
+  <span class="keyword">def</span> <span class="function">__init__</span>(self, input_size):
+    self.input_proj = nn.Sequential(
+      nn.Conv1d(input_size, <span class="number">128</span>, kernel_size=<span class="number">1</span>),
+      nn.BatchNorm1d(<span class="number">128</span>), nn.ReLU())
+    self.block1 = <span class="comment"># Residual: 128→128</span>
+    self.block2 = <span class="comment"># Residual: 128→256</span>
+    self.pool = nn.AdaptiveAvgPool1d(<span class="number">1</span>)
+    <span class="comment"># Head: 256 → 128 → 64 → 3</span>
       </div>
+    </div>
+  </div>
+  <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
+    <div class="card" style="flex:1;min-width:160px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);">Optimizer</div>
+      <div style="font-weight:600;font-size:14px;">AdamW lr=3e-4</div>
+    </div>
+    <div class="card" style="flex:1;min-width:160px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);">Regularization</div>
+      <div style="font-weight:600;font-size:14px;">Dropout 0.4 + Label Smooth 0.1</div>
+    </div>
+    <div class="card" style="flex:1;min-width:160px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);">Scheduler</div>
+      <div style="font-weight:600;font-size:14px;">CosineAnnealingLR</div>
+    </div>
+    <div class="card" style="flex:1;min-width:160px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);">GPU</div>
+      <div style="font-weight:600;font-size:14px;">Quadro P5000</div>
+    </div>
+  </div>
+</div>
 
-      <div>
-        <div class="meter-label">
-          <span><span style="color:var(--red);">●</span> Attack</span>
-          <span style="color:var(--red);">32.6%</span>
-        </div>
-        <div class="meter-bar">
-          <div class="meter-fill" style="width:32.6%; background:var(--red);"></div>
-        </div>
+<!-- ═══════ SLIDE 6: RESULTS ═══════ -->
+<div class="slide" id="s6">
+  <div class="slide-label">04 — Results</div>
+  <h2>Both models exceed the 80% target</h2>
+  <div class="two-col">
+    <div>
+      <table class="result-table">
+        <thead>
+          <tr><th>Model</th><th>Accuracy</th><th>Attack F1</th><th>Susp. F1</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>BiLSTM + Attention</td><td class="highlight">93.84%</td><td>0.945</td><td>0.795</td></tr>
+          <tr><td>1D Residual CNN</td><td class="highlight">94.11%</td><td>0.943</td><td>0.805</td></tr>
+          <tr><td><strong>Ensemble</strong></td><td class="highlight"><strong>≥ 94.11%</strong></td><td><strong>≥ 0.945</strong></td><td><strong>Improved</strong></td></tr>
+          <tr style="background:var(--rose-light);"><td class="dim">Visual-Strip Baseline</td><td class="dim">~47%</td><td class="dim">—</td><td class="dim">0%</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:13px;margin-top:12px;color:var(--muted);">
+        The Suspicious class — which the baseline couldn't detect at all — now achieves 91–93% recall.
+      </p>
+    </div>
+    <div>
+      <div style="font-weight:600;color:var(--text);margin-bottom:8px;font-size:14px;">Ensemble Confusion Matrix (test set)</div>
+      <div class="cm-grid">
+        <div class="cm-cell"></div>
+        <div class="cm-cell cm-header">Attack</div>
+        <div class="cm-cell cm-header">Benign</div>
+        <div class="cm-cell cm-header">Susp.</div>
+
+        <div class="cm-cell cm-label">Attack</div>
+        <div class="cm-cell cm-high">2,128</div>
+        <div class="cm-cell cm-low">62</div>
+        <div class="cm-cell cm-low">91</div>
+
+        <div class="cm-cell cm-label">Benign</div>
+        <div class="cm-cell cm-low">108</div>
+        <div class="cm-cell cm-high">3,906</div>
+        <div class="cm-cell cm-low">122</div>
+
+        <div class="cm-cell cm-label">Susp.</div>
+        <div class="cm-cell cm-mid">16</div>
+        <div class="cm-cell cm-mid">22</div>
+        <div class="cm-cell cm-high">553</div>
       </div>
+      <p style="font-size:12px;margin-top:10px;color:var(--muted);">
+        Dominant error: Suspicious → Attack (over-alerting, not missed threats). This is the safer failure mode.
+      </p>
+    </div>
+  </div>
+</div>
 
-      <div>
-        <div class="meter-label">
-          <span><span style="color:var(--orange);">●</span> Suspicious</span>
-          <span style="color:var(--orange);">8.4%</span>
-        </div>
-        <div class="meter-bar">
-          <div class="meter-fill" style="width:8.4%; background:var(--orange);"></div>
-        </div>
-      </div>
+<!-- ═══════ SLIDE 7: ESCALATION ═══════ -->
+<div class="slide" id="s7">
+  <div class="slide-label">04 — Results: Escalation</div>
+  <h2>Confidence-based human-in-the-loop</h2>
+  <p>Not every decision should be automated. At 0.75 confidence threshold:</p>
+  <div class="card-row four" style="margin-top:24px;">
+    <div class="card" style="text-align:center;border-top:3px solid var(--green);">
+      <div class="num" style="color:var(--green);">85%</div>
+      <div class="label">Traffic auto-classified</div>
+    </div>
+    <div class="card" style="text-align:center;border-top:3px solid var(--accent);">
+      <div class="num" style="color:var(--accent);">96%+</div>
+      <div class="label">Accuracy on auto-classified</div>
+    </div>
+    <div class="card" style="text-align:center;border-top:3px solid var(--amber);">
+      <div class="num" style="color:var(--amber);">15%</div>
+      <div class="label">Escalated to analysts</div>
+    </div>
+    <div class="card" style="text-align:center;border-top:3px solid var(--rose);">
+      <div class="num" style="color:var(--rose);">≈0</div>
+      <div class="label">Missed attacks</div>
+    </div>
+  </div>
+  <div class="code-block" style="margin-top:20px;max-height:140px;font-size:12px;">
+<span class="comment"># Confidence threshold sweep from ids.ipynb</span>
+conf_all = ens_probs_all.max(axis=<span class="number">1</span>)
+<span class="keyword">for</span> thr <span class="keyword">in</span> np.linspace(<span class="number">0.50</span>, <span class="number">0.99</span>, <span class="number">40</span>):
+    mask = conf_all >= thr
+    auto_acc = accuracy_score(y_test[mask], ens_preds[mask])
+    coverage = mask.mean() * <span class="number">100</span>
+<span class="comment"># At thr=0.75: 85% coverage, 96%+ accuracy</span>
+  </div>
+</div>
 
-      <div class="divider"></div>
-      <h3 style="margin-bottom:4px;">Feature Types (Raw)</h3>
-      <ul class="clean" style="font-size:14px;">
-        <li>261 float32 statistical features</li>
-        <li>25 int8 flag/count features</li>
-        <li>20 int32 byte/packet counts</li>
-        <li>IP addresses, timestamps, protocol</li>
+<!-- ═══════ SLIDE 8: CHALLENGES & NEXT STEPS ═══════ -->
+<div class="slide" id="s8">
+  <div class="slide-label">05 — Final Steps & Challenges</div>
+  <h2>What's left to do</h2>
+  <div class="two-col" style="margin-top:16px;">
+    <div>
+      <div style="font-weight:600;color:var(--rose);margin-bottom:10px;">Known Limitations</div>
+      <ul>
+        <li><strong>Suspicious precision ~70%</strong> — roughly 3 in 10 Suspicious alerts are false positives. Mitigated by the escalation threshold.</li>
+        <li><strong>Single dataset</strong> — trained and tested on BCCC only. Generalization to other networks is untested.</li>
+        <li><strong>Fixed 30-flow window</strong> — may miss attacks that are shorter or longer than this span.</li>
       </ul>
     </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 4 — PROJECT OVERVIEW
-═══════════════════════════════════════════════════════ -->
-<div class="slide" id="s4">
-  <div class="slide-label">Project Architecture</div>
-  <h2>Two Complementary Approaches</h2>
-
-  <div class="row" style="gap:24px; flex:1;">
-    <!-- Approach 1 -->
-    <div class="col">
-      <div class="card card-accent" style="flex:1;">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-          <div style="width:40px; height:40px; background:rgba(69,88,212,.10); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🖼️</div>
-          <div>
-            <div style="font-size:11px; color:var(--muted); letter-spacing:1px;">BASELINE · ids_2.ipynb</div>
-            <div style="font-weight:700; font-size:17px;">CNN Visual Strip</div>
-          </div>
-        </div>
-        <ul class="clean" style="font-size:14px;">
-          <li>Each flow → 8×32 grayscale image strip</li>
-          <li>2D CNN trained on pixel intensities</li>
-          <li>TensorFlow / Keras framework</li>
-          <li>32 carefully selected features</li>
-        </ul>
-        <div class="divider"></div>
-        <div class="row" style="gap:10px;">
-          <div class="stat" style="flex:1; padding:12px;">
-            <div class="stat-val" style="font-size:24px; color:var(--green);">94.05%</div>
-            <div class="stat-lbl">Binary Acc.</div>
-          </div>
-          <div class="stat" style="flex:1; padding:12px;">
-            <div class="stat-val" style="font-size:24px; color:var(--orange);">~47%</div>
-            <div class="stat-lbl">3-Class Acc.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- vs -->
-    <div style="display:flex; align-items:center; color:var(--muted); font-weight:700; font-size:18px;">VS</div>
-
-    <!-- Approach 2 -->
-    <div class="col">
-      <div class="card card-purple" style="flex:1;">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-          <div style="width:40px; height:40px; background:rgba(112,69,184,.10); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">⏱️</div>
-          <div>
-            <div style="font-size:11px; color:var(--muted); letter-spacing:1px;">MAIN MODEL · ids.ipynb</div>
-            <div style="font-weight:700; font-size:17px;">Temporal Sequence Models</div>
-          </div>
-        </div>
-        <ul class="clean" style="font-size:14px;">
-          <li>30 time-sorted flows → one sequence</li>
-          <li>BiLSTM + Soft Attention (PyTorch)</li>
-          <li>1D Residual CNN (PyTorch)</li>
-          <li>86 features after rigorous selection</li>
-        </ul>
-        <div class="divider"></div>
-        <div class="row" style="gap:10px;">
-          <div class="stat" style="flex:1; padding:12px;">
-            <div class="stat-val" style="font-size:24px; color:var(--green);">93.84%</div>
-            <div class="stat-lbl">BiLSTM Acc.</div>
-          </div>
-          <div class="stat" style="flex:1; padding:12px;">
-            <div class="stat-val" style="font-size:24px; color:var(--green);">94.11%</div>
-            <div class="stat-lbl">CNN Acc.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="note" style="margin-top:20px;">
-    💡 The temporal models achieve <strong>~47% → ~94%</strong> on the hard 3-class problem by modeling sequences of flows instead of individual records.
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 5 — DATA PIPELINE
-═══════════════════════════════════════════════════════ -->
-<div class="slide" id="s5">
-  <div class="slide-label">Data Pipeline</div>
-  <h2>From Raw CSV to Model-Ready Windows</h2>
-
-  <div style="margin-bottom:22px;">
-    <div class="pipeline">
-      <div class="pipe-step" style="border-color:var(--accent); color:var(--accent);">📂 Load CSV<br><span style="color:var(--muted); font-size:11px;">700K × 324</span></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-step">🧹 Clean<br><span style="color:var(--muted); font-size:11px;">Parse & fix</span></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-step">🕐 Sort<br><span style="color:var(--muted); font-size:11px;">Chronological</span></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-step">📊 Scale<br><span style="color:var(--muted); font-size:11px;">MinMax (train only)</span></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-step">✂️ Select<br><span style="color:var(--muted); font-size:11px;">318 → 86 feats</span></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-step">🪟 Window<br><span style="color:var(--muted); font-size:11px;">30 flows × 86</span></div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-step" style="border-color:var(--green); color:var(--green);">🔀 Split<br><span style="color:var(--muted); font-size:11px;">Stratified 70/15/15</span></div>
-    </div>
-  </div>
-
-  <div class="row" style="gap:20px; flex:1;">
-    <div class="col" style="gap:14px;">
-      <div class="card card-accent">
-        <h3>Feature Selection (318 → 86)</h3>
-        <div class="divider" style="margin:10px 0;"></div>
-        <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
-          <div style="flex:1;">
-            <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Step 1: Variance Threshold</div>
-            <div class="meter-bar"><div class="meter-fill" style="width:48.4%; background:var(--accent);"></div></div>
-            <div style="font-size:11px; color:var(--muted); margin-top:3px;">318 → 154 features</div>
-          </div>
-        </div>
-        <div style="display:flex; gap:10px; align-items:center;">
-          <div style="flex:1;">
-            <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Step 2: Correlation Pruning (r > 0.97)</div>
-            <div class="meter-bar"><div class="meter-fill" style="width:27%; background:var(--accent2);"></div></div>
-            <div style="font-size:11px; color:var(--muted); margin-top:3px;">154 → 86 features &nbsp; <span class="badge badge-green">89.9% reduction</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card card-orange">
-        <h3>No Data Leakage</h3>
-        <p style="font-size:14px; color:var(--muted); margin-top:6px;">
-          Scaler and feature selectors are <strong style="color:var(--orange);">fit on the first 70% of rows only</strong>
-          (train-time data), then applied to the full dataset. Test set statistics never influence preprocessing.
-        </p>
-      </div>
-    </div>
-
-    <div class="col" style="gap:14px;">
-      <div class="card card-green">
-        <h3>Sliding Window Logic</h3>
-        <div style="font-family:monospace; font-size:13px; background:var(--surface2); padding:14px; border-radius:8px; margin-top:10px; line-height:2; border:1px solid var(--border);">
-          <span style="color:var(--muted);">flow</span><sub>t-29</sub> → <sub>t-28</sub> → … → <span style="color:var(--green);">flow</span><sub>t</sub>
-          <br>
-          <span style="color:var(--muted); font-size:11px;">← window = 30 flows, stride = 15 (50% overlap) →</span>
-          <br>
-          <span style="color:var(--orange);">label</span> = label of <strong>last</strong> flow (exact ground truth)
-        </div>
-        <div style="margin-top:12px; font-size:13px; color:var(--muted);">
-          Total windows: <strong style="color:var(--text);">46,717</strong>
-          &ensp;|&ensp; Train: <strong>32,701</strong>
-          &ensp;|&ensp; Val/Test: <strong>7,008</strong> each
-        </div>
-      </div>
-
-      <div class="card card-purple">
-        <h3>Stratified Split Strategy</h3>
-        <p style="font-size:14px; color:var(--muted); margin-top:6px;">
-          Split at <strong style="color:var(--accent2);">window level</strong>, stratified by class label.
-          This guarantees all 3 classes appear in every split — critical because
-          Suspicious flows cluster at the end of the timeline.
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 6 — BASELINE MODEL (CNN VISUAL STRIP)
-═══════════════════════════════════════════════════════ -->
-<div class="slide" id="s6">
-  <div class="slide-label">Approach 1 — Baseline</div>
-  <h2>CNN Visual Strip (ids_2.ipynb)</h2>
-
-  <div class="row" style="gap:24px; flex:1;">
-    <div class="col" style="gap:16px;">
-      <div class="card card-accent">
-        <h3>Visual Strip Idea</h3>
-        <p style="font-size:14px; color:var(--muted); margin-top:8px;">
-          Each network flow record is converted to a <strong style="color:var(--accent);">8×32 grayscale image</strong>.
-          Feature values are normalized 0→255 (black = low, white = high).
-          A 2D CNN then "sees" the traffic pattern visually.
-        </p>
-        <div style="margin-top:12px; display:flex; gap:4px; align-items:center;">
-          <div style="font-size:12px; color:var(--muted);">32 features selected</div>
-          <span class="pipe-arrow" style="font-size:16px;">→</span>
-          <div style="font-family:monospace; font-size:12px; background:var(--bg); padding:4px 10px; border-radius:6px;">shape: (8, 32, 1)</div>
-          <span class="pipe-arrow" style="font-size:16px;">→</span>
-          <div style="font-size:12px; color:var(--muted);">CNN input</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Top Selected Features</h3>
-        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
-          <span class="badge badge-blue">packet_IAT_max</span>
-          <span class="badge badge-blue">packets_IAT_mean</span>
-          <span class="badge badge-blue">packet_IAT_total</span>
-          <span class="badge badge-blue">syn_flag_%</span>
-          <span class="badge badge-blue">rst_flag_%</span>
-          <span class="badge badge-blue">fwd_max_header_bytes</span>
-          <span class="badge badge-blue">mean_header_bytes</span>
-          <span class="badge badge-blue">rst_flag_counts</span>
-          <span class="badge badge-purple">+ 24 more</span>
-        </div>
-      </div>
-
-      <div class="card card-orange">
-        <h3>Limitation Found</h3>
-        <p style="font-size:14px; color:var(--muted); margin-top:6px;">
-          Treats each flow <strong>independently</strong> — no temporal context.
-          Struggled to distinguish Suspicious from Benign (similar flow statistics but
-          different <em>sequence patterns</em>). 3-class accuracy: only <strong style="color:var(--orange);">~47%</strong>.
-        </p>
-      </div>
-    </div>
-
-    <div class="col" style="max-width:300px; gap:14px;">
-      <h3>CNN Architecture</h3>
-      <div class="arch-layer" style="border-color:var(--accent); color:var(--accent);">Input (8, 32, 1)</div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer">Conv2D(32) + BN + Conv2D(32) + BN<br><span style="color:var(--muted); font-size:11px;">MaxPool + Dropout(0.25)</span></div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer">Conv2D(64) + BN + Conv2D(64) + BN<br><span style="color:var(--muted); font-size:11px;">MaxPool + Dropout(0.25)</span></div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer">Conv2D(128) + GlobalAvgPool</div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer">Dense(128) + BN + Dropout(0.5)<br>Dense(64) + Dropout(0.3)</div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer" style="border-color:var(--green); color:var(--green);">Dense(1, sigmoid) — Binary<br>Dense(3, softmax) — 3-class</div>
-
-      <div class="divider"></div>
-      <div style="font-size:13px; color:var(--muted);">
-        Optimizer: Adam · LR: 0.001<br>
-        Batch: 256 · Epochs: 30 (early stop)<br>
-        Class weights balanced
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 7 — BILSTM MODEL
-═══════════════════════════════════════════════════════ -->
-<div class="slide" id="s7">
-  <div class="slide-label">Approach 2A — Temporal Model</div>
-  <h2>BiLSTM + Soft Attention</h2>
-
-  <div class="row" style="gap:24px; flex:1;">
-    <div class="col" style="gap:14px;">
-      <div class="card card-purple">
-        <h3>Core Idea</h3>
-        <p style="font-size:14px; color:var(--muted); margin-top:8px;">
-          A Bidirectional LSTM reads each 30-flow window <strong>forward and backward</strong>,
-          capturing long-range temporal dependencies in network traffic.
-          A <strong style="color:var(--accent2);">soft attention</strong> mechanism then
-          weights each timestep — letting the model focus on the most anomalous flows.
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>Why Bidirectional?</h3>
-        <ul class="clean" style="font-size:14px; margin-top:8px;">
-          <li>Forward pass: context from <em>past</em> flows</li>
-          <li>Backward pass: context from <em>future</em> flows</li>
-          <li>Combined: 256-dim representation per timestep</li>
-          <li>Better at detecting anomalies embedded in normal traffic</li>
+    <div>
+      <div style="font-weight:600;color:var(--green);margin-bottom:10px;">Remaining Work</div>
+      <div class="card" style="border-left:3px solid var(--green);margin-top:4px;">
+        <div style="font-weight:600;color:var(--text);font-size:16px;margin-bottom:6px;">Final Paper (Weeks 11–12)</div>
+        <ul style="font-size:15px;">
+          <li>Expanded literature review and related work survey</li>
+          <li>Deployment architecture and production considerations</li>
+          <li>Complete conclusion and future directions</li>
         </ul>
       </div>
-
-      <div class="card card-green">
-        <h3>Why Soft Attention?</h3>
-        <ul class="clean" style="font-size:14px; margin-top:8px;">
-          <li>Not all 30 flows are equally informative</li>
-          <li>Attention learns which timesteps matter most</li>
-          <li>A single SYN flood burst in a window of benign flows gets highlighted</li>
-          <li>More interpretable than a collapsed hidden state</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="col" style="max-width:340px; gap:8px;">
-      <h3>Architecture</h3>
-      <div class="arch-layer" style="border-color:var(--accent2); color:var(--accent2);">Input (B, 30, 86)</div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer">Linear(86→128) + BatchNorm + ReLU + Dropout<br><span style="color:var(--muted); font-size:11px;">Input projection — stabilises training</span></div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer" style="border-color:var(--accent2);">BiLSTM(hidden=128, layers=2)<br><span style="color:var(--muted); font-size:11px;">Output: (B, 30, 256)</span></div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer">Soft Attention over 30 timesteps<br><span style="color:var(--muted); font-size:11px;">Weighted sum → (B, 256)</span></div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer">LayerNorm → Linear(256→64) → ReLU → Dropout(0.4)</div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer" style="border-color:var(--green); color:var(--green);">Linear(64→3) — Attack / Benign / Suspicious</div>
-
-      <div class="divider" style="margin:10px 0;"></div>
-      <div style="font-size:13px; color:var(--muted);">
-        Parameters: <strong style="color:var(--text);">688,260</strong><br>
-        Test Accuracy: <strong style="color:var(--green);">93.84%</strong>
-      </div>
+      <p style="margin-top:16px;font-size:14px;color:var(--muted);font-style:italic;">
+        All prototype development, model training, testing, and validation are complete. The remaining deliverable is the final written paper.
+      </p>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 8 — 1D CNN MODEL
-═══════════════════════════════════════════════════════ -->
-<div class="slide" id="s8">
-  <div class="slide-label">Approach 2B — Temporal Model</div>
-  <h2>1D Residual CNN</h2>
-
-  <div class="row" style="gap:24px; flex:1;">
-    <div class="col" style="gap:14px;">
-      <div class="card card-accent">
-        <h3>Core Idea</h3>
-        <p style="font-size:14px; color:var(--muted); margin-top:8px;">
-          Treats each feature as a <strong style="color:var(--accent);">channel</strong> and convolves
-          across the 30 time steps — detecting <em>local temporal patterns</em> like
-          repeated SYN bursts in consecutive flows.
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>Why Residual Connections?</h3>
-        <ul class="clean" style="font-size:14px; margin-top:8px;">
-          <li>Skip connections prevent gradient vanishing in deep layers</li>
-          <li>Each block learns incremental refinements over the input</li>
-          <li>Enables training deeper networks reliably</li>
-          <li>Combined with intra-block Dropout(0.2) for strong regularisation</li>
-        </ul>
-      </div>
-
-      <div class="card card-green">
-        <h3>Training Configuration</h3>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; font-size:13px;">
-          <span class="badge badge-blue">AdamW optimizer</span>
-          <span class="badge badge-blue">LR: 3e-4</span>
-          <span class="badge badge-blue">Weight decay: 1e-3</span>
-          <span class="badge badge-green">CosineAnnealingLR</span>
-          <span class="badge badge-green">Label smoothing: 0.1</span>
-          <span class="badge badge-orange">Class-weighted loss</span>
-          <span class="badge badge-purple">Batch: 256</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="col" style="max-width:360px; gap:8px;">
-      <h3>Architecture</h3>
-      <div class="arch-layer" style="border-color:var(--accent); color:var(--accent);">Input (B, 30, 86) → transpose → (B, 86, 30)</div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer">Conv1d(86→128, k=1) + BN + ReLU<br><span style="color:var(--muted); font-size:11px;">Input projection</span></div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer" style="border-color:var(--accent); padding:12px 14px;">
-        <strong>Residual Block 1 (128→128)</strong><br>
-        <span style="color:var(--muted); font-size:11px;">Conv1d + BN + ReLU + Dropout(0.2) + Conv1d + BN</span><br>
-        <span style="color:var(--accent); font-size:11px;">+ skip connection</span>
-      </div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer" style="border-color:var(--accent2); padding:12px 14px;">
-        <strong>Residual Block 2 (128→256)</strong><br>
-        <span style="color:var(--muted); font-size:11px;">Conv1d + BN + ReLU + Dropout(0.2) + Conv1d + BN</span><br>
-        <span style="color:var(--accent2); font-size:11px;">+ projected skip connection</span>
-      </div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer">AdaptiveAvgPool → (B, 256)</div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer">Linear(256→128→64→3) + Dropout(0.4 / 0.2)</div>
-      <div class="arch-arrow">↓</div>
-      <div class="arch-layer" style="border-color:var(--green); color:var(--green);">3-class output</div>
-
-      <div class="divider" style="margin:10px 0;"></div>
-      <div style="font-size:13px; color:var(--muted);">
-        Parameters: <strong style="color:var(--text);">481,283</strong><br>
-        Test Accuracy: <strong style="color:var(--green);">94.11%</strong>
-      </div>
-    </div>
+<!-- ═══════ SLIDE 9: THANK YOU ═══════ -->
+<div class="slide title-slide" id="s9">
+  <div class="slide-label">Thank You</div>
+  <h1>Questions?</h1>
+  <div class="divider"></div>
+  <div style="font-size:16px;color:var(--muted);max-width:600px;line-height:1.7;">
+    Code: <code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">ids.ipynb</code> &nbsp;·&nbsp;
+    GitHub: <code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">loki52501</code><br><br>
+    Lokesh L K S &nbsp;·&nbsp; ljl5837@psu.edu<br>
+    The Pennsylvania State University
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 9 — KEY CHALLENGES & SOLUTIONS
-═══════════════════════════════════════════════════════ -->
-<div class="slide" id="s9">
-  <div class="slide-label">Engineering Decisions</div>
-  <h2>Key Challenges & How We Solved Them</h2>
-
-  <div style="flex:1; display:flex; flex-direction:column; gap:14px;">
-
-    <div class="row" style="gap:14px;">
-      <div class="card card-orange" style="flex:1;">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-          <span style="font-size:22px;">⚠️</span>
-          <h3>Class Imbalance — Suspicious Traffic</h3>
-        </div>
-        <p style="font-size:13.5px; color:var(--muted);">
-          Suspicious flows (8.4%) cluster at Dec 18–19. A plain time-split gave
-          <strong style="color:var(--red);">0 Suspicious samples in training</strong>.
-          Models learned to ignore the class entirely.
-        </p>
-        <div style="margin-top:10px; padding:8px 12px; background:rgba(26,148,100,.07); border-radius:8px; font-size:13px; color:var(--green);">
-          ✓ Fix: Build windows over full dataset, then <strong>stratify the split at window level</strong> — all 3 classes in every split.
-        </div>
-      </div>
-
-      <div class="card card-accent" style="flex:1;">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-          <span style="font-size:22px;">📉</span>
-          <h3>Data Leakage Risk</h3>
-        </div>
-        <p style="font-size:13.5px; color:var(--muted);">
-          If the scaler or feature selectors see test data during fitting, evaluation
-          results are overly optimistic and not representative of real deployment.
-        </p>
-        <div style="margin-top:10px; padding:8px 12px; background:rgba(26,148,100,.07); border-radius:8px; font-size:13px; color:var(--green);">
-          ✓ Fix: Fit scaler and selectors on <strong>first 70% of chronological rows only</strong>; apply transform to all.
-        </div>
-      </div>
-    </div>
-
-    <div class="row" style="gap:14px;">
-      <div class="card card-green" style="flex:1;">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-          <span style="font-size:22px;">🔴</span>
-          <h3>Overfitting</h3>
-        </div>
-        <p style="font-size:13.5px; color:var(--muted);">High-dimensional input (318 raw features) caused models to memorise training patterns.</p>
-        <div style="margin-top:10px; padding:8px 12px; background:rgba(26,148,100,.07); border-radius:8px; font-size:13px; color:var(--green);">
-          ✓ Variance threshold + correlation pruning → 86 features<br>
-          ✓ Dropout 0.4, intra-block Dropout 0.2<br>
-          ✓ Label smoothing 0.1, weight decay 1e-3<br>
-          ✓ CosineAnnealingLR for stable training
-        </div>
-      </div>
-
-      <div class="card card-purple" style="flex:1;">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-          <span style="font-size:22px;">🪟</span>
-          <h3>Window Labeling</h3>
-        </div>
-        <p style="font-size:13.5px; color:var(--muted);">Majority-vote labeling silently drops the rare Suspicious class since benign flows dominate most windows.</p>
-        <div style="margin-top:10px; padding:8px 12px; background:rgba(26,148,100,.07); border-radius:8px; font-size:13px; color:var(--green);">
-          ✓ Fix: Use <strong>label of the last flow</strong> in each window — preserves exact ground truth, keeps Suspicious samples visible.
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="background:rgba(69,88,212,.05); border-color:rgba(69,88,212,.18);">
-      <div class="row" style="gap:30px; align-items:center;">
-        <div style="font-size:13px; color:var(--muted);">Other important decisions:</div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px;">
-          <span class="badge badge-blue">Drop flow_id / src_ip / dst_ip</span>
-          <span class="badge badge-blue">Sort by timestamp first</span>
-          <span class="badge badge-blue">Input projection + BatchNorm</span>
-          <span class="badge badge-purple">Gradient clipping (max=1.0)</span>
-          <span class="badge badge-green">Class-weighted loss</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 10 — RESULTS
-═══════════════════════════════════════════════════════ -->
-<div class="slide" id="s10">
-  <div class="slide-label">Results</div>
-  <h2>Model Performance Comparison</h2>
-
-  <div style="flex:1; display:flex; flex-direction:column; gap:20px;">
-
-    <table>
-      <thead>
-        <tr>
-          <th>Model</th>
-          <th>Task</th>
-          <th>Test Accuracy</th>
-          <th>Precision</th>
-          <th>Recall</th>
-          <th>F1 (macro)</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>CNN Visual Strip</strong></td>
-          <td><span class="badge badge-blue">Binary</span></td>
-          <td class="green"><strong>94.05%</strong></td>
-          <td>0.95</td>
-          <td>0.88</td>
-          <td>—</td>
-          <td><span style="color:var(--muted);">AUC 0.976</span></td>
-        </tr>
-        <tr>
-          <td><strong>CNN Visual Strip</strong></td>
-          <td><span class="badge badge-orange">3-Class</span></td>
-          <td style="color:var(--red);">~47%</td>
-          <td>—</td>
-          <td>—</td>
-          <td>—</td>
-          <td><span style="color:var(--muted);">Missed Suspicious</span></td>
-        </tr>
-        <tr class="winner">
-          <td><strong>BiLSTM + Attention</strong></td>
-          <td><span class="badge badge-green">3-Class</span></td>
-          <td class="green"><strong>93.84%</strong></td>
-          <td>0.876</td>
-          <td>0.937</td>
-          <td>0.900</td>
-          <td><span style="color:var(--muted);">688K params</span></td>
-        </tr>
-        <tr class="winner">
-          <td><strong>1D Residual CNN</strong></td>
-          <td><span class="badge badge-green">3-Class</span></td>
-          <td class="green"><strong>94.11%</strong> ⭐</td>
-          <td>0.881</td>
-          <td>0.934</td>
-          <td>0.904</td>
-          <td><span style="color:var(--muted);">481K params</span></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="row" style="gap:20px;">
-      <div class="card" style="flex:1;">
-        <h3>BiLSTM — Per-Class Breakdown</h3>
-        <div class="divider" style="margin:10px 0;"></div>
-        <div class="meter-wrap">
-          <div class="meter-label"><span style="color:var(--red);">Attack</span><span>F1: 0.945</span></div>
-          <div class="meter-bar"><div class="meter-fill" style="width:94.5%; background:var(--red);"></div></div>
-        </div>
-        <div class="meter-wrap">
-          <div class="meter-label"><span style="color:var(--green);">Benign</span><span>F1: 0.959</span></div>
-          <div class="meter-bar"><div class="meter-fill" style="width:95.9%; background:var(--green);"></div></div>
-        </div>
-        <div class="meter-wrap">
-          <div class="meter-label"><span style="color:var(--orange);">Suspicious</span><span>F1: 0.795</span></div>
-          <div class="meter-bar"><div class="meter-fill" style="width:79.5%; background:var(--orange);"></div></div>
-        </div>
-      </div>
-
-      <div class="card" style="flex:1;">
-        <h3>1D CNN — Per-Class Breakdown</h3>
-        <div class="divider" style="margin:10px 0;"></div>
-        <div class="meter-wrap">
-          <div class="meter-label"><span style="color:var(--red);">Attack</span><span>F1: 0.943</span></div>
-          <div class="meter-bar"><div class="meter-fill" style="width:94.3%; background:var(--red);"></div></div>
-        </div>
-        <div class="meter-wrap">
-          <div class="meter-label"><span style="color:var(--green);">Benign</span><span>F1: 0.963</span></div>
-          <div class="meter-bar"><div class="meter-fill" style="width:96.3%; background:var(--green);"></div></div>
-        </div>
-        <div class="meter-wrap">
-          <div class="meter-label"><span style="color:var(--orange);">Suspicious</span><span>F1: 0.805</span></div>
-          <div class="meter-bar"><div class="meter-fill" style="width:80.5%; background:var(--orange);"></div></div>
-        </div>
-      </div>
-
-      <div class="card card-green" style="max-width:260px; justify-content:center;">
-        <h3>Key Takeaway</h3>
-        <p style="font-size:14px; color:var(--muted); margin-top:8px;">
-          Temporal models achieve <strong style="color:var(--green);">~94%</strong> on the
-          hard <strong>3-class problem</strong> — where the baseline (no temporal context)
-          scored only <strong style="color:var(--red);">~47%</strong>.
-        </p>
-        <div style="margin-top:12px; text-align:center; font-size:28px; font-weight:800; color:var(--green);">+47%</div>
-        <div style="text-align:center; font-size:12px; color:var(--muted);">improvement over baseline</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 11 — ITERATION HISTORY
-═══════════════════════════════════════════════════════ -->
-<div class="slide" id="s11">
-  <div class="slide-label">Development Journey</div>
-  <h2>Iteration History</h2>
-
-  <div class="row" style="gap:24px; flex:1;">
-    <div class="col" style="gap:16px;">
-      <div class="card card-orange">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-          <span class="step-num">1</span>
-          <h3>Round 1 — Architecture Improvements</h3>
-        </div>
-        <table style="font-size:13px;">
-          <thead>
-            <tr>
-              <th style="background:transparent; padding:4px 8px;">Change</th>
-              <th style="background:transparent; padding:4px 8px;">Before</th>
-              <th style="background:transparent; padding:4px 8px;">After</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding:5px 8px;">Feature count</td>
-              <td style="padding:5px 8px; color:var(--muted);">318 raw</td>
-              <td style="padding:5px 8px; color:var(--green);">~86 selected</td>
-            </tr>
-            <tr>
-              <td style="padding:5px 8px;">Window size</td>
-              <td style="padding:5px 8px; color:var(--muted);">20 flows</td>
-              <td style="padding:5px 8px; color:var(--green);">30 flows</td>
-            </tr>
-            <tr>
-              <td style="padding:5px 8px;">Window label</td>
-              <td style="padding:5px 8px; color:var(--muted);">Majority vote</td>
-              <td style="padding:5px 8px; color:var(--green);">Last-flow label</td>
-            </tr>
-            <tr>
-              <td style="padding:5px 8px;">LSTM output</td>
-              <td style="padding:5px 8px; color:var(--muted);">Last hidden state</td>
-              <td style="padding:5px 8px; color:var(--green);">Soft attention</td>
-            </tr>
-            <tr>
-              <td style="padding:5px 8px;">CNN blocks</td>
-              <td style="padding:5px 8px; color:var(--muted);">Plain Conv1d</td>
-              <td style="padding:5px 8px; color:var(--green);">Residual blocks</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="col" style="gap:16px;">
-      <div class="card card-accent">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-          <span class="step-num">2</span>
-          <h3>Round 2 — Overfitting Fix</h3>
-        </div>
-        <div class="note" style="margin-bottom:12px; font-size:13px;">
-          <strong>Root cause:</strong> 0 Suspicious windows in training with temporal split.
-          Test set was 38% Suspicious. Models predicted Suspicious 0% of the time.
-        </div>
-        <table style="font-size:13px;">
-          <thead>
-            <tr>
-              <th style="background:transparent; padding:4px 8px;">Change</th>
-              <th style="background:transparent; padding:4px 8px;">Impact</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding:5px 8px;">Stratified window split</td>
-              <td style="padding:5px 8px; color:var(--green);">All classes in every split</td>
-            </tr>
-            <tr>
-              <td style="padding:5px 8px;">Dropout 0.3 → 0.4</td>
-              <td style="padding:5px 8px; color:var(--green);">Stronger regularisation</td>
-            </tr>
-            <tr>
-              <td style="padding:5px 8px;">BatchNorm in projection</td>
-              <td style="padding:5px 8px; color:var(--green);">Stable activations</td>
-            </tr>
-            <tr>
-              <td style="padding:5px 8px;">Label smoothing 0.1</td>
-              <td style="padding:5px 8px; color:var(--green);">Less overconfident preds</td>
-            </tr>
-            <tr>
-              <td style="padding:5px 8px;">CosineAnnealing LR</td>
-              <td style="padding:5px 8px; color:var(--green);">Smooth, stable decay</td>
-            </tr>
-            <tr>
-              <td style="padding:5px 8px;">Weight decay 1e-4 → 1e-3</td>
-              <td style="padding:5px 8px; color:var(--green);">Stronger L2 penalty</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 12 — FUTURE WORK & CONCLUSION
-═══════════════════════════════════════════════════════ -->
-<div class="slide" id="s12">
-  <div class="slide-label">Conclusion</div>
-  <h2>Summary & Future Directions</h2>
-
-  <div class="row" style="gap:24px; flex:1;">
-    <div class="col" style="gap:16px;">
-      <div class="card card-green">
-        <h3>What We Achieved</h3>
-        <ul class="clean" style="margin-top:10px; font-size:14.5px;">
-          <li>Full ML pipeline from raw 700K-flow CSV to deployed models</li>
-          <li><strong>89.9% feature reduction</strong> (318 → 86 features) with no accuracy loss</li>
-          <li><strong>BiLSTM + Attention:</strong> 93.84% on 3-class classification</li>
-          <li><strong>1D Residual CNN:</strong> 94.11% — best overall model</li>
-          <li>Solved temporal class-skew with stratified window split</li>
-          <li>Eliminated data leakage in preprocessing</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3>Saved Artifacts</h3>
-        <div style="font-family:monospace; font-size:13px; color:var(--muted); line-height:2; margin-top:8px;">
-          <span style="color:var(--accent);">models/</span>bilstm_ids.pt &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--muted);"># BiLSTM weights</span><br>
-          <span style="color:var(--accent);">models/</span>cnn1d_ids.pt &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--muted);"># 1D CNN weights</span><br>
-          <span style="color:var(--accent);">models/</span>temporal_scaler.pkl &nbsp;&nbsp; <span style="color:var(--muted);"># MinMaxScaler</span><br>
-          <span style="color:var(--accent);">models/</span>variance_selector.pkl &nbsp;<span style="color:var(--muted);"># Feature selector</span><br>
-          <span style="color:var(--accent);">models/</span>cnn_binary_ids.keras &nbsp;&nbsp;&nbsp;<span style="color:var(--muted);"># TF baseline</span><br>
-          <span style="color:var(--green);">ddos_clean.parquet</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--muted);"># Cleaned dataset</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="col" style="gap:16px; max-width:380px;">
-      <div class="card card-purple">
-        <h3>Future Work</h3>
-        <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-          <div style="display:flex; align-items:flex-start; gap:10px;">
-            <span style="color:var(--accent2); font-size:16px; flex-shrink:0;">◈</span>
-            <div>
-              <div style="font-size:14px; font-weight:600;">Real-Time Inference Pipeline</div>
-              <div style="font-size:13px; color:var(--muted);">Streaming window over live network traffic for immediate alerts</div>
-            </div>
-          </div>
-          <div style="display:flex; align-items:flex-start; gap:10px;">
-            <span style="color:var(--accent2); font-size:16px; flex-shrink:0;">◈</span>
-            <div>
-              <div style="font-size:14px; font-weight:600;">Explainability</div>
-              <div style="font-size:13px; color:var(--muted);">SHAP / Grad-CAM to explain which flows triggered an alert</div>
-            </div>
-          </div>
-          <div style="display:flex; align-items:flex-start; gap:10px;">
-            <span style="color:var(--accent2); font-size:16px; flex-shrink:0;">◈</span>
-            <div>
-              <div style="font-size:14px; font-weight:600;">Activity-Level Classification</div>
-              <div style="font-size:13px; color:var(--muted);">Extend to 26-class attack type identification</div>
-            </div>
-          </div>
-          <div style="display:flex; align-items:flex-start; gap:10px;">
-            <span style="color:var(--accent2); font-size:16px; flex-shrink:0;">◈</span>
-            <div>
-              <div style="font-size:14px; font-weight:600;">Web Dashboard</div>
-              <div style="font-size:13px; color:var(--muted);">Monitoring UI with real-time alerts and traffic visualizations</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style="background:linear-gradient(135deg, rgba(69,88,212,.07), rgba(112,69,184,.07)); border:1px solid rgba(69,88,212,.2); border-radius:14px; padding:22px 24px; text-align:center;">
-        <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">BEST RESULT</div>
-        <div style="font-size:52px; font-weight:800; color:var(--green);">94.11%</div>
-        <div style="font-size:14px; color:var(--muted); margin-top:4px;">1D Residual CNN · 3-class classification</div>
-        <div style="font-size:13px; color:var(--muted); margin-top:4px;">Attack · Benign · Suspicious</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-</div><!-- end #deck -->
-
-<!-- CONTROLS -->
-<div id="controls">
-  <button class="btn" id="prev" title="Previous (←)">&#8592;</button>
-  <span id="slide-counter">1 / 12</span>
-  <button class="btn" id="next" title="Next (→)">&#8594;</button>
+<!-- ═══ NAVIGATION ═══ -->
+<div class="nav">
+  <button onclick="go(-1)">←</button>
+  <div class="dots" id="dots"></div>
+  <button onclick="go(1)">→</button>
+  <span id="counter"></span>
 </div>
 
 <script>
-  const slides = Array.from(document.querySelectorAll('.slide'));
-  const total  = slides.length;
-  let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const dotsEl = document.getElementById('dots');
+const counter = document.getElementById('counter');
+const progress = document.getElementById('progress');
+let cur = 0;
 
-  const counter  = document.getElementById('slide-counter');
-  const progress = document.getElementById('progress');
+// Build dots
+slides.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => show(i);
+  dotsEl.appendChild(d);
+});
 
-  function goTo(n) {
-    if (n < 0 || n >= total) return;
-    slides[cur].classList.remove('active');
-    slides[cur].classList.add('out-left');
-    setTimeout(() => slides[cur].classList.remove('out-left'), 400);
+function show(n) {
+  slides[cur].classList.remove('active');
+  dotsEl.children[cur].classList.remove('active');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  dotsEl.children[cur].classList.add('active');
+  counter.textContent = `${cur + 1} / ${slides.length}`;
+  progress.style.width = ((cur + 1) / slides.length * 100) + '%';
+}
 
-    cur = n;
-    slides[cur].classList.add('active');
+function go(dir) { show(cur + dir); }
 
-    counter.textContent  = `${cur + 1} / ${total}`;
-    progress.style.width = `${((cur + 1) / total) * 100}%`;
-  }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft') go(-1);
+  if (e.key === 'Home') show(0);
+  if (e.key === 'End') show(slides.length - 1);
+});
 
-  document.getElementById('next').addEventListener('click', () => goTo(cur + 1));
-  document.getElementById('prev').addEventListener('click', () => goTo(cur - 1));
+// Touch support
+let touchX = 0;
+document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+document.addEventListener('touchend', e => {
+  const diff = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(diff) > 50) go(diff < 0 ? 1 : -1);
+});
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') goTo(cur + 1);
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    goTo(cur - 1);
-  });
-
-  // Touch / swipe
-  let tx = 0;
-  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
-  document.addEventListener('touchend',   e => {
-    const dx = e.changedTouches[0].clientX - tx;
-    if (Math.abs(dx) > 50) goTo(dx < 0 ? cur + 1 : cur - 1);
-  });
-
-  // Init progress bar
-  progress.style.width = `${(1 / total) * 100}%`;
+show(0);
 </script>
 </body>
 </html>
