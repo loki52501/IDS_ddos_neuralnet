@@ -1,7 +1,23 @@
-dataset/
-CSVs/
-data/
+# Documents
+*.docx
+*.doc
+*.pdf
+*.pptx
+*.ppt
+
+# IDE / Editor
 .vscode/
-.claude
+.claude/
+
+# Archives
 CSVs.zip
 dataset.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo

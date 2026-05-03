@@ -76,6 +76,8 @@ capstone_ids/
 - Final feature set: 32 features (union of important features for both tasks)
 - **Feature reduction: 89.9%** (317 → 32 features)
 
+![Feature Importance](results/feature_importance.png)
+
 #### Top Selected Features
 - `packet_IAT_max`, `packets_IAT_mean`, `packet_IAT_total`
 - `fwd_max_header_bytes`, `bwd_mean_header_bytes`
@@ -90,6 +92,8 @@ Each network traffic record is converted into a grayscale visual strip:
 - **Strip Dimensions**: 8 x 32 pixels (height x width)
 - **Pixel Intensity**: 0 (black) = low values, 255 (white) = high values
 - Features are normalized using MinMaxScaler
+
+![Visual Strip Samples](results/visual_strips.png)
 
 #### Model Architecture
 
@@ -119,6 +123,14 @@ Dense(1, sigmoid) -> Binary Output
 - Epochs: 30 (with early stopping)
 - Class Weights: Balanced (to handle imbalanced data)
 - Callbacks: EarlyStopping, ReduceLROnPlateau
+
+![Training History](results/training_history.png)
+
+#### Classification Samples
+![Correct vs Incorrect Classifications](results/correct_vs_incorrect.png)
+
+#### Multi-Class Confusion Matrix
+![Multi-Class Confusion Matrix](results/multiclass_confusion.png)
 
 ### Temporal PoC: ids.ipynb
 
@@ -158,6 +170,8 @@ Input (B, 30, F)
 ```
 
 Attention allows the model to focus on the most anomalous flows in the window rather than collapsing the entire sequence to one hidden state.
+
+![BiLSTM vs 1D CNN Results](results/bilstm_vs_cnn.png)
 
 **Model B — 1D Residual CNN:**
 ```
@@ -257,8 +271,15 @@ predictions = model.predict(preprocess(new_traffic_data))
 |---|---|---|---|
 | CNN Visual Strip (binary) | ids_2.ipynb | **94.05%** | AUC 0.976, Precision 0.95, Recall 0.88 |
 | CNN Visual Strip (3-class) | ids_2.ipynb | ~47% | Struggled with Suspicious class imbalance |
-| BiLSTM + Attention | ids.ipynb | TBD | Run notebook to fill in |
-| 1D Residual CNN | ids.ipynb | TBD | Run notebook to fill in |
+| BiLSTM + Attention | ids.ipynb | **93.8%** | See confusion matrix below |
+| 1D Residual CNN | ids.ipynb | **94.1%** | See confusion matrix below |
+| Ensemble (BiLSTM + CNN) | ids.ipynb | **94.85%** | Soft-vote ensemble |
+
+### Ensemble Confusion Matrix
+![Ensemble Confusion Matrix](results/ensemble_confusion.png)
+
+### Ensemble Confidence Analysis
+![Ensemble Confidence Analysis](results/ensemble_confidence.png)
 
 ## Iteration History
 
