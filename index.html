@@ -400,6 +400,9 @@ body {
     <div style="background:var(--green-light);padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--green);">Benign → Allow</div>
     <div style="background:var(--amber-light);padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--amber);">Suspicious → Analyst Review</div>
   </div>
+  <div style="margin-top:24px;">
+    <img src="sysdesign.png" alt="System Design" style="max-width:100%;max-height:260px;border-radius:8px;border:1px solid var(--border);">
+  </div>
 </div>
 
 <!-- ═══════ SLIDE 4: CODE DEMO — Data Pipeline ═══════ -->
@@ -521,42 +524,28 @@ STRIDE = <span class="number">15</span>  <span class="comment"># 50% overlap</sp
           <tr><th>Model</th><th>Accuracy</th><th>Attack F1</th><th>Susp. F1</th></tr>
         </thead>
         <tbody>
-          <tr><td>BiLSTM + Attention</td><td class="highlight">93.84%</td><td>0.945</td><td>0.795</td></tr>
-          <tr><td>1D Residual CNN</td><td class="highlight">94.11%</td><td>0.943</td><td>0.805</td></tr>
-          <tr><td><strong>Ensemble</strong></td><td class="highlight"><strong>≥ 94.11%</strong></td><td><strong>≥ 0.945</strong></td><td><strong>Improved</strong></td></tr>
+          <tr><td>BiLSTM + Attention</td><td class="highlight">93.8%</td><td>0.945</td><td>0.795</td></tr>
+          <tr><td>1D Residual CNN</td><td class="highlight">94.1%</td><td>0.943</td><td>0.805</td></tr>
+          <tr><td><strong>Ensemble (BiLSTM + CNN)</strong></td><td class="highlight"><strong>94.85%</strong></td><td><strong>0.945</strong></td><td><strong>0.820</strong></td></tr>
           <tr style="background:var(--rose-light);"><td class="dim">Visual-Strip Baseline</td><td class="dim">~47%</td><td class="dim">—</td><td class="dim">0%</td></tr>
         </tbody>
       </table>
       <p style="font-size:13px;margin-top:12px;color:var(--muted);">
         The Suspicious class — which the baseline couldn't detect at all — now achieves 91–93% recall.
       </p>
+      <div style="margin-top:16px;">
+        <img src="results/bilstm_vs_cnn.png" alt="BiLSTM vs 1D CNN Results" style="max-width:100%;border-radius:8px;border:1px solid var(--border);">
+      </div>
     </div>
     <div>
       <div style="font-weight:600;color:var(--text);margin-bottom:8px;font-size:14px;">Ensemble Confusion Matrix (test set)</div>
-      <div class="cm-grid">
-        <div class="cm-cell"></div>
-        <div class="cm-cell cm-header">Attack</div>
-        <div class="cm-cell cm-header">Benign</div>
-        <div class="cm-cell cm-header">Susp.</div>
-
-        <div class="cm-cell cm-label">Attack</div>
-        <div class="cm-cell cm-high">2,128</div>
-        <div class="cm-cell cm-low">62</div>
-        <div class="cm-cell cm-low">91</div>
-
-        <div class="cm-cell cm-label">Benign</div>
-        <div class="cm-cell cm-low">108</div>
-        <div class="cm-cell cm-high">3,906</div>
-        <div class="cm-cell cm-low">122</div>
-
-        <div class="cm-cell cm-label">Susp.</div>
-        <div class="cm-cell cm-mid">16</div>
-        <div class="cm-cell cm-mid">22</div>
-        <div class="cm-cell cm-high">553</div>
-      </div>
+      <img src="results/ensemble_confusion.png" alt="Ensemble Confusion Matrix" style="max-width:100%;border-radius:8px;border:1px solid var(--border);margin-bottom:12px;">
       <p style="font-size:12px;margin-top:10px;color:var(--muted);">
         Dominant error: Suspicious → Attack (over-alerting, not missed threats). This is the safer failure mode.
       </p>
+      <div style="margin-top:16px;">
+        <img src="results/ensemble_confidence.png" alt="Ensemble Confidence Analysis" style="max-width:100%;border-radius:8px;border:1px solid var(--border);">
+      </div>
     </div>
   </div>
 </div>
@@ -568,15 +557,15 @@ STRIDE = <span class="number">15</span>  <span class="comment"># 50% overlap</sp
   <p>Not every decision should be automated. At 0.75 confidence threshold:</p>
   <div class="card-row four" style="margin-top:24px;">
     <div class="card" style="text-align:center;border-top:3px solid var(--green);">
-      <div class="num" style="color:var(--green);">85%</div>
+      <div class="num" style="color:var(--green);">72%</div>
       <div class="label">Traffic auto-classified</div>
     </div>
     <div class="card" style="text-align:center;border-top:3px solid var(--accent);">
-      <div class="num" style="color:var(--accent);">96%+</div>
+      <div class="num" style="color:var(--accent);">98%+</div>
       <div class="label">Accuracy on auto-classified</div>
     </div>
     <div class="card" style="text-align:center;border-top:3px solid var(--amber);">
-      <div class="num" style="color:var(--amber);">15%</div>
+      <div class="num" style="color:var(--amber);">28%</div>
       <div class="label">Escalated to analysts</div>
     </div>
     <div class="card" style="text-align:center;border-top:3px solid var(--rose);">
@@ -591,7 +580,10 @@ conf_all = ens_probs_all.max(axis=<span class="number">1</span>)
     mask = conf_all >= thr
     auto_acc = accuracy_score(y_test[mask], ens_preds[mask])
     coverage = mask.mean() * <span class="number">100</span>
-<span class="comment"># At thr=0.75: 85% coverage, 96%+ accuracy</span>
+<span class="comment"># At thr=0.75: 72% coverage, 98%+ accuracy</span>
+  </div>
+  <div style="margin-top:16px;">
+    <img src="results/ensemble_confidence.png" alt="Ensemble Confidence Analysis" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--border);">
   </div>
 </div>
 
@@ -625,14 +617,56 @@ conf_all = ens_probs_all.max(axis=<span class="number">1</span>)
   </div>
 </div>
 
-<!-- ═══════ SLIDE 9: THANK YOU ═══════ -->
-<div class="slide title-slide" id="s9">
+<!-- ═══════ SLIDE 9: DEMO ═══════ -->
+<div class="slide" id="s9">
+  <div class="slide-label">05 — Live Demo</div>
+  <h2>Run the prototype yourself</h2>
+  <p>A standalone <code style="font-family:var(--font-mono);font-size:15px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">demo.py</code> script demonstrates the full pipeline end-to-end.</p>
+  <div class="two-col" style="margin-top:20px;">
+    <div>
+      <div class="code-block" style="font-size:12px;">
+<span class="comment"># Show preprocessing pipeline</span>
+$ python demo.py --mode pipeline
+
+<span class="comment"># Train tiny demo models (~2 min CPU)</span>
+$ python demo.py --mode train
+
+<span class="comment"># Run inference with saved models</span>
+$ python demo.py --mode inference
+      </div>
+      <div class="card" style="margin-top:16px;border-left:3px solid var(--green);">
+        <div style="font-weight:600;color:var(--text);margin-bottom:6px;">Sample Output</div>
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted);line-height:1.7;">
+[0] Loading raw CSV...<br>
+&nbsp;&nbsp;Loaded 50,000 rows x 324 cols<br>
+[1] Cleaning dataset...<br>
+&nbsp;&nbsp;[OK] Sorted chronologically<br>
+&nbsp;&nbsp;[OK] Filled 775,684 NaN/Inf values<br>
+[3] Building windows...<br>
+&nbsp;&nbsp;[OK] Total windows: 3,332<br>
+[SUCCESS] Pipeline complete.
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:600;color:var(--text);margin-bottom:10px;font-size:14px;">Visual Strip Baseline</div>
+      <img src="results/visual_strips.png" alt="Visual Strips" style="max-width:100%;border-radius:8px;border:1px solid var(--border);margin-bottom:16px;">
+      <div style="font-weight:600;color:var(--text);margin-bottom:10px;font-size:14px;">Baseline Training Curves</div>
+      <img src="results/training_history.png" alt="Training History" style="max-width:100%;border-radius:8px;border:1px solid var(--border);">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 10: THANK YOU ═══════ -->
+<div class="slide title-slide" id="s10">
   <div class="slide-label">Thank You</div>
   <h1>Questions?</h1>
   <div class="divider"></div>
   <div style="font-size:16px;color:var(--muted);max-width:600px;line-height:1.7;">
-    Code: <code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">ids.ipynb</code> &nbsp;·&nbsp;
-    GitHub: <code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">loki52501</code><br><br>
+    Notebooks: <code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">ids.ipynb</code> &nbsp;·&nbsp;
+    <code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">ids_2.ipynb</code><br>
+    Demo: <code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">demo.py</code> &nbsp;·&nbsp;
+    GitHub: <code style="font-family:var(--font-mono);font-size:14px;background:#f0f0ec;padding:2px 8px;border-radius:4px;">loki52501/IDS_gemini</code><br><br>
     Lokesh L K S &nbsp;·&nbsp; ljl5837@psu.edu<br>
     The Pennsylvania State University
   </div>
