@@ -8,6 +8,12 @@ Two complementary approaches:
 1. **Baseline (ids_2.ipynb)** — CNN with grayscale visual-strip representation (TensorFlow/Keras)
 2. **Temporal PoC (ids.ipynb)** — Temporal models using time-sorted sliding windows of network flows (PyTorch)
 
+### System Architecture
+
+![System Design](sysdesign.png)
+
+**Data flow**: BCCC dataset -> preprocessing -> temporal windows -> BiLSTM / 1D CNN -> ensemble -> alert/escalation
+
 ## Dataset
 
 - **Source**: `dataset/merged_CSVs.csv` (BCCC-Cloud-DDoS-2024)
@@ -214,6 +220,39 @@ seaborn
 joblib
 pyarrow       # for parquet files
 tensorflow    # for baseline CNN (ids_2.ipynb only)
+```
+
+## Quick Demo
+
+A standalone `demo.py` script is included to demonstrate the full pipeline end-to-end:
+
+```bash
+# Show preprocessing pipeline (no model required)
+python demo.py --mode pipeline
+
+# Train tiny demo models on a subset (~2 min on CPU)
+python demo.py --mode train
+
+# Run inference with saved models
+python demo.py --mode inference
+```
+
+**Sample output (`--mode pipeline`)**:
+```
+[0] Loading raw CSV...
+    Loaded 50,000 rows x 324 cols
+[1] Cleaning dataset...
+    [OK] Sorted chronologically
+    [OK] Filled 775,684 NaN/Inf values
+    [OK] Shape: (50000, 320), Features: 318
+[2] Labels: ['Attack', 'Benign', 'Suspicious']
+    [OK] Scaled to [0, 1]
+    [OK] Variance threshold: 318 -> 86 features
+[3] Building windows (size=30, stride=15)...
+    [OK] Total windows: 3,332
+[4] Sample window shape: (30, 86)
+    Sample label: Benign
+[SUCCESS] Pipeline complete. Ready for model inference.
 ```
 
 ## Usage
